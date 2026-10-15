@@ -21,6 +21,7 @@ Frosted-glass surfaces over a violet → cyan aurora, Sora headings over Geist, 
 <img width="1688" height="938" alt="image" src="https://github.com/user-attachments/assets/2f2c954f-9c73-474c-aca3-0b50c9bd61fb" />
 <img width="1898" height="974" alt="image" src="https://github.com/user-attachments/assets/b28cea25-4de5-4558-960c-99bf94aa4428" />
 
+<img width="1393" height="966" alt="image" src="https://github.com/user-attachments/assets/c98b171e-f6bf-496c-bc69-2622039e4934" />
 
 ## Install
 
