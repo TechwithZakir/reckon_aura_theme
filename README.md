@@ -16,6 +16,12 @@ Frosted-glass surfaces over a violet → cyan aurora, Sora headings over Geist, 
 | Fill with AI | On Sales Invoice / Order, Quotation, Delivery Note, Purchase Order / Invoice / Receipt drafts: paste a PO or email, AI extracts party + items + qty + rate and matches them to your masters. Nothing is saved automatically |
 | Login | Aurora login with a brand hero (headline / tagline / footer from settings). Only auth pages are styled — your website keeps its Website Theme |
 
+<img width="1888" height="982" alt="image" src="https://github.com/user-attachments/assets/3a754677-3b4e-488a-96cb-a0f562f4fb6b" />
+<img width="1901" height="968" alt="image" src="https://github.com/user-attachments/assets/9fbb6adf-28ee-49f6-b4a8-413165f27ac1" />
+<img width="1688" height="938" alt="image" src="https://github.com/user-attachments/assets/2f2c954f-9c73-474c-aca3-0b50c9bd61fb" />
+<img width="1898" height="974" alt="image" src="https://github.com/user-attachments/assets/b28cea25-4de5-4558-960c-99bf94aa4428" />
+
+
 ## Install
 
 ```bash
