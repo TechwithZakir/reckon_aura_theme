@@ -217,8 +217,9 @@ header.navbar {
 .form-sidebar {
 	background: transparent;
 }
-.body-sidebar,
-.body-sidebar-container {
+/* Glass goes on the panel only. backdrop-filter makes an element a stacking context, so on
+   the container it trapped the mobile drawer's z-index (1020) and the page painted over it. */
+.body-sidebar {
 	background: var(--aura-glass) !important;
 	backdrop-filter: blur(var(--aura-blur));
 	-webkit-backdrop-filter: blur(var(--aura-blur));
@@ -817,4 +818,22 @@ input[type="checkbox"] { accent-color: var(--aura-accent); }
 	.aura-ask { max-width: none; max-height: 88vh; border-radius: 22px 22px 0 0; }
 	.page-title .title-text { font-size: 1.15rem; }
 	.frappe-list .list-row { min-height: 52px; }
+}
+
+/* Mobile sidebar drawer — matches Frappe's media-breakpoint-down(sm). The drawer covers the
+   page here, so it is opaque (glass over page text is unreadable) and sits above the page;
+   when closed it must stay invisible, as Frappe intends, instead of keeping our glass. */
+@media (max-width: 767.98px) {
+	.body-sidebar-container.expanded { z-index: 1020; }
+	.body-sidebar-container.expanded .body-sidebar {
+		background: var(--aura-solid) !important;
+		box-shadow: var(--aura-shadow-lg);
+	}
+	.body-sidebar-container:not(.expanded) .body-sidebar {
+		background: transparent !important;
+		border-right-color: transparent !important;
+		box-shadow: none;
+		backdrop-filter: none;
+		-webkit-backdrop-filter: none;
+	}
 }
