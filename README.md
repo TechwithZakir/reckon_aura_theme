@@ -1,6 +1,6 @@
 # Reckon Aura Theme
 
-**Aurora Glass** — an AI-first desk theme for **Frappe / ERPNext v16+**.
+**Aurora Glass** — an AI-first desk theme for **Frappe / ERPNext v16+**.reckon_aura_theme
 Frosted-glass surfaces over a violet → cyan aurora, Sora headings over Geist, dark-first with a full light mode, and AI built into the layout.
 
 ## What you get
