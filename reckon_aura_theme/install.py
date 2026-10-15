@@ -23,27 +23,28 @@ def after_install():
 
 
 def after_migrate():
-	ensure_settings()
+	# Only seed a site whose settings were never saved. Re-seeding on every migrate
+	# would bring back text an admin cleared on purpose (e.g. the login headline).
+	if not frappe.db.exists("DocType", SETTINGS):
+		return
+	if not frappe.db.sql("select 1 from `tabSingles` where doctype=%s limit 1", SETTINGS):
+		ensure_settings()
 
 
 def ensure_settings():
 	if not frappe.db.exists("DocType", SETTINGS):
 		return
 	doc = frappe.get_single(SETTINGS)
-	changed = False
 	for field, value in DEFAULTS.items():
 		if doc.get(field) in (None, ""):
 			doc.set(field, value)
-			changed = True
 	if not doc.brand_name:
 		doc.brand_name = (
 			frappe.db.get_single_value("Website Settings", "app_name")
 			or frappe.db.get_single_value("System Settings", "app_name")
 			or "ERPNext"
 		)
-		changed = True
-	if changed:
-		doc.flags.ignore_permissions = True
-		doc.flags.ignore_mandatory = True
-		doc.save()
-		frappe.db.commit()
+	doc.flags.ignore_permissions = True
+	doc.flags.ignore_mandatory = True
+	doc.save()
+	frappe.db.commit()

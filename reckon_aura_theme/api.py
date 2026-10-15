@@ -45,8 +45,24 @@ EXTRACT_PROMPT = (
 # ---------------------------------------------------------------- config
 
 
+class AuraAIError(Exception):
+	"""AI call failed. Raised instead of frappe.throw when the caller wants no user-facing message."""
+
+
 def _settings():
 	return frappe.get_cached_doc(SETTINGS)
+
+
+def _require_desk_user():
+	"""AI endpoints are for desk (System) users only, not portal / website users."""
+	user = frappe.session.user
+	if user == "Guest" or frappe.get_cached_value("User", user, "user_type") != "System User":
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
+def _like(text):
+	"""Escape LIKE wildcards in user / AI supplied text."""
+	return "%" + str(text).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
 
 
 def _api_key(s):
@@ -110,15 +126,29 @@ def _can(doctype):
 	return frappe.db.exists("DocType", doctype) and frappe.has_permission(doctype, "read")
 
 
-def _rows(doctype, filters, fields, order_by=None, limit=500):
+def _rows(doctype, filters, fields, order_by=None, limit=0):
+	# limit=0 → no limit, so counts and totals are never silently truncated.
 	return frappe.get_list(
 		doctype, filters=filters, fields=fields, order_by=order_by or "creation desc", limit_page_length=limit
 	)
 
 
 def _sum(doctype, filters, field):
-	rows = _rows(doctype, filters, [field], limit=5000)
+	rows = _rows(doctype, filters, [field])
 	return sum(flt(r.get(field)) for r in rows)
+
+
+def _overdue_filters(scope, today):
+	return {**scope, "docstatus": 1, "outstanding_amount": [">", 0], "due_date": ["<", str(today)]}
+
+
+def _due_soon_filters(scope, today):
+	return {
+		**scope,
+		"docstatus": 1,
+		"outstanding_amount": [">", 0],
+		"due_date": ["between", [str(today), str(add_days(today, 7))]],
+	}
 
 
 def _company_currency():
@@ -141,7 +171,7 @@ def _build_brief():
 	if _can("Sales Invoice"):
 		overdue = _rows(
 			"Sales Invoice",
-			{**scope, "docstatus": 1, "outstanding_amount": [">", 0], "due_date": ["<", today]},
+			_overdue_filters(scope, today),
 			["name", "customer_name", "outstanding_amount", "due_date"],
 			order_by="outstanding_amount desc",
 		)
@@ -152,20 +182,29 @@ def _build_brief():
 				{
 					"tone": "warn",
 					"text": _("{0} overdue invoices worth {1}. {2} is the largest, {3} days late.").format(
-						len(overdue), _money(total, currency), top.customer_name, (today - getdate(top.due_date)).days
+						len(overdue),
+						_money(total, currency),
+						top.customer_name,
+						(today - getdate(top.due_date)).days,
 					),
 					"cta": _("Review overdue"),
-					"route": ["List", "Sales Invoice", {"status": "Overdue"}],
+					"route": ["List", "Sales Invoice", _overdue_filters(scope, today)],
 				}
 			)
 
 		first = get_first_day(today)
 		this_period = _sum(
-			"Sales Invoice", {**scope, "docstatus": 1, "posting_date": ["between", [first, today]]}, "base_grand_total"
+			"Sales Invoice",
+			{**scope, "docstatus": 1, "posting_date": ["between", [first, today]]},
+			"base_grand_total",
 		)
 		last_period = _sum(
 			"Sales Invoice",
-			{**scope, "docstatus": 1, "posting_date": ["between", [add_months(first, -1), add_months(today, -1)]]},
+			{
+				**scope,
+				"docstatus": 1,
+				"posting_date": ["between", [add_months(first, -1), add_months(today, -1)]],
+			},
 			"base_grand_total",
 		)
 		if this_period or last_period:
@@ -186,7 +225,7 @@ def _build_brief():
 				}
 			)
 
-		drafts = _rows("Sales Invoice", {**scope, "docstatus": 0}, ["name"], limit=200)
+		drafts = _rows("Sales Invoice", {**scope, "docstatus": 0}, ["name"])
 		if drafts:
 			insights.append(
 				{
@@ -200,12 +239,7 @@ def _build_brief():
 	if _can("Purchase Invoice"):
 		due = _rows(
 			"Purchase Invoice",
-			{
-				**scope,
-				"docstatus": 1,
-				"outstanding_amount": [">", 0],
-				"due_date": ["between", [today, add_days(today, 7)]],
-			},
+			_due_soon_filters(scope, today),
 			["name", "outstanding_amount"],
 		)
 		if due:
@@ -216,16 +250,18 @@ def _build_brief():
 						len(due), _money(sum(flt(d.outstanding_amount) for d in due), currency)
 					),
 					"cta": _("Plan payments"),
-					"route": ["List", "Purchase Invoice", {"status": "Unpaid"}],
+					"route": ["List", "Purchase Invoice", _due_soon_filters(scope, today)],
 				}
 			)
 
 	if not insights and _can("ToDo"):
-		todos = _rows("ToDo", {"allocated_to": frappe.session.user, "status": "Open"}, ["name"], limit=200)
+		todos = _rows("ToDo", {"allocated_to": frappe.session.user, "status": "Open"}, ["name"])
 		insights.append(
 			{
 				"tone": "ok",
-				"text": _("You have {0} open to-do(s).").format(len(todos)) if todos else _("All clear — nothing needs you right now."),
+				"text": _("You have {0} open to-do(s).").format(len(todos))
+				if todos
+				else _("All clear — nothing needs you right now."),
 				"cta": _("Open to-dos"),
 				"route": ["List", "ToDo", {"allocated_to": frappe.session.user, "status": "Open"}],
 			}
@@ -236,6 +272,7 @@ def _build_brief():
 
 @frappe.whitelist()
 def get_brief(refresh=0):
+	_require_desk_user()
 	key = f"aura_brief::{frappe.session.user}"
 	cache = _cache()
 	if not cint(refresh):
@@ -247,6 +284,7 @@ def get_brief(refresh=0):
 	headline = None
 	s = _settings()
 	if _ai_ready(s) and insights:
+		# The headline is optional: a failing provider must not pop an error on every workspace.
 		try:
 			headline = _complete(
 				s,
@@ -254,8 +292,9 @@ def get_brief(refresh=0):
 				"Use only these facts. No preamble.",
 				"\n".join(i["text"] for i in insights),
 				max_tokens=80,
+				quiet=True,
 			).strip()
-		except Exception:
+		except AuraAIError:
 			headline = None
 
 	result = {"headline": headline, "insights": insights, "ai": bool(headline), "generated_at": nowdate()}
@@ -276,51 +315,89 @@ def _require_ai(s):
 		)
 
 
-def _complete(s, system, user, max_tokens=700):
+def _post(url, headers, payload):
+	r = requests.post(url, headers=headers, json=payload, timeout=60)
+	r.raise_for_status()
+	return r.json()
+
+
+def _complete(s, system, user, max_tokens=700, quiet=False):
+	"""Call the configured provider. Errors are logged; with quiet=True they raise
+	AuraAIError (no message reaches the user), otherwise a user-facing frappe.throw."""
 	key = _api_key(s)
 	provider = s.ai_provider or "OpenAI Compatible"
 	try:
 		if provider == "Anthropic":
 			base = s.ai_base_url or "https://api.anthropic.com"
-			r = requests.post(
+			data = _post(
 				f"{base}/v1/messages",
-				headers={"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
-				json={
+				{"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+				{
 					"model": s.ai_model,
 					"max_tokens": max_tokens,
 					"system": system,
 					"messages": [{"role": "user", "content": user}],
 				},
-				timeout=60,
 			)
-			r.raise_for_status()
-			return "".join(b.get("text", "") for b in r.json().get("content", []) if b.get("type") == "text")
+			return "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
 
 		base = s.ai_base_url or "https://api.openai.com/v1"
-		r = requests.post(
+		data = _post(
 			f"{base}/chat/completions",
-			headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-			json={
+			{"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+			{
 				"model": s.ai_model,
 				"max_tokens": max_tokens,
 				"temperature": 0.2,
 				"messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
 			},
-			timeout=60,
 		)
-		r.raise_for_status()
-		return r.json()["choices"][0]["message"]["content"] or ""
+		return data["choices"][0]["message"]["content"] or ""
 	except requests.HTTPError as e:
+		status = getattr(e.response, "status_code", "?")
 		frappe.log_error(f"{e}\n\n{getattr(e.response, 'text', '')[:2000]}", "Aura AI request failed")
-		frappe.throw(_("The AI provider returned an error ({0}). Check the model and API key.").format(e.response.status_code))
+		message = _("The AI provider returned an error ({0}). Check the model and API key.").format(status)
 	except requests.RequestException as e:
 		frappe.log_error(str(e), "Aura AI request failed")
-		frappe.throw(_("Could not reach the AI provider. Check the Base URL and network."))
+		message = _("Could not reach the AI provider. Check the Base URL and network.")
+	except (ValueError, KeyError, IndexError, TypeError, AttributeError) as e:
+		frappe.log_error(f"Unexpected response shape: {e!r}", "Aura AI request failed")
+		message = _("The AI provider sent a reply that could not be read. Check the Base URL and model.")
+
+	if quiet:
+		raise AuraAIError(message)
+	frappe.throw(message)
+
+
+def _ask_records():
+	"""Top records behind the brief, so the assistant can name invoices and parties."""
+	today = getdate(nowdate())
+	company, _currency = _company_currency()
+	scope = {"company": company} if company else {}
+	records = {}
+	if _can("Sales Invoice"):
+		records["overdue_sales_invoices"] = _rows(
+			"Sales Invoice",
+			_overdue_filters(scope, today),
+			["name", "customer_name", "outstanding_amount", "due_date"],
+			order_by="outstanding_amount desc",
+			limit=10,
+		)
+	if _can("Purchase Invoice"):
+		records["supplier_bills_due_7_days"] = _rows(
+			"Purchase Invoice",
+			_due_soon_filters(scope, today),
+			["name", "supplier_name", "outstanding_amount", "due_date"],
+			order_by="due_date asc",
+			limit=10,
+		)
+	return records
 
 
 @frappe.whitelist(methods=["POST"])
 @rate_limit(limit=40, seconds=60 * 60)
 def ask(question, route=None):
+	_require_desk_user()
 	question = (question or "").strip()[:2000]
 	if not question:
 		frappe.throw(_("Type a question first."))
@@ -335,8 +412,9 @@ def ask(question, route=None):
 		"user": frappe.utils.get_fullname(frappe.session.user),
 		"company": company,
 		"currency": currency,
-		"current_page": route,
+		"current_page": str(route or "")[:200],
 		"facts": [i["text"] for i in _build_brief()],
+		"records": _ask_records(),
 	}
 	answer = _complete(
 		s,
@@ -360,12 +438,15 @@ def test_connection():
 def _parse_json(raw):
 	raw = re.sub(r"^```(?:json)?|```$", "", (raw or "").strip(), flags=re.M).strip()
 	start, end = raw.find("{"), raw.rfind("}")
-	if start == -1 or end == -1:
+	data = None
+	if start != -1 and end > start:
+		try:
+			data = json.loads(raw[start : end + 1])
+		except ValueError:
+			data = None
+	if not isinstance(data, dict):
 		frappe.throw(_("The AI reply could not be read. Try again with clearer text."))
-	try:
-		return json.loads(raw[start : end + 1])
-	except ValueError:
-		frappe.throw(_("The AI reply could not be read. Try again with clearer text."))
+	return data
 
 
 def _date(value):
@@ -378,24 +459,29 @@ def _date(value):
 def _match_party(party_type, name):
 	if not name:
 		return None
-	name = str(name).strip()
-	if frappe.db.exists(party_type, name):
-		return name
+	name = str(name).strip()[:140]
+	exact = frappe.get_list(party_type, filters={"name": name}, pluck="name", limit=1)
+	if exact:
+		return exact[0]
 	label = "customer_name" if party_type == "Customer" else "supplier_name"
-	hit = frappe.get_list(party_type, filters={label: ["like", f"%{name}%"], "disabled": 0}, pluck="name", limit=1)
+	hit = frappe.get_list(
+		party_type, filters={label: ["like", _like(name)], "disabled": 0}, pluck="name", limit=1
+	)
 	return hit[0] if hit else None
 
 
-def _match_item(text):
+def _match_item(text, party_type):
 	if not text:
 		return None
-	text = str(text).strip()
-	if frappe.db.exists("Item", text):
-		return text
+	text = str(text).strip()[:140]
+	filters = {"disabled": 0, "is_sales_item" if party_type == "Customer" else "is_purchase_item": 1}
+	exact = frappe.get_list("Item", filters={**filters, "name": text}, pluck="name", limit=1)
+	if exact:
+		return exact[0]
 	hit = frappe.get_list(
 		"Item",
-		filters={"disabled": 0},
-		or_filters={"item_code": ["like", f"%{text}%"], "item_name": ["like", f"%{text}%"]},
+		filters=filters,
+		or_filters={"item_code": ["like", _like(text)], "item_name": ["like", _like(text)]},
 		pluck="name",
 		limit=1,
 	)
@@ -405,6 +491,7 @@ def _match_item(text):
 @frappe.whitelist(methods=["POST"])
 @rate_limit(limit=60, seconds=60 * 60)
 def extract_document(doctype, text):
+	_require_desk_user()
 	if doctype not in PARTY_FIELDS:
 		frappe.throw(_("Fill with AI is not available for {0}.").format(doctype))
 	frappe.has_permission(doctype, "create", throw=True)
@@ -418,19 +505,25 @@ def extract_document(doctype, text):
 		_complete(s, EXTRACT_PROMPT.format(party_type=party_type), (text or "")[:12000], max_tokens=1500)
 	)
 
+	rows = data.get("items")
 	items, unmatched = [], []
-	for row in (data.get("items") or [])[:100]:
+	for row in (rows if isinstance(rows, list) else [])[:100]:
+		if not isinstance(row, dict):
+			continue
 		label = row.get("item") or row.get("description")
-		code = _match_item(label)
+		code = _match_item(label, party_type)
 		if code:
-			items.append({"item_code": code, "qty": flt(row.get("qty")) or 1, "rate": flt(row.get("rate")) or None})
+			items.append(
+				{"item_code": code, "qty": flt(row.get("qty")) or 1, "rate": flt(row.get("rate")) or None}
+			)
 		elif label:
 			unmatched.append(str(label)[:80])
 
+	party = data.get("party")
 	return {
 		"party_type": party_type,
-		"party": _match_party(party_type, data.get("party")),
-		"party_text": data.get("party"),
+		"party": _match_party(party_type, party),
+		"party_text": str(party)[:140] if party else None,
 		"due_date": _date(data.get("due_date")),
 		"delivery_date": _date(data.get("delivery_date")),
 		"items": items,

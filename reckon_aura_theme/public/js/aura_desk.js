@@ -204,6 +204,22 @@
 			aura.close_ask();
 			frappe.set_route("List", dt);
 		});
+		// Keep keyboard focus inside the modal panel.
+		aura.$ask.on("keydown", (e) => {
+			if (e.key === "Escape") return aura.close_ask();
+			if (e.key !== "Tab") return;
+			const $f = aura.$ask.find("input, button").filter(":visible");
+			if (!$f.length) return;
+			const first = $f[0];
+			const last = $f[$f.length - 1];
+			if (e.shiftKey && document.activeElement === first) {
+				e.preventDefault();
+				last.focus();
+			} else if (!e.shiftKey && document.activeElement === last) {
+				e.preventDefault();
+				first.focus();
+			}
+		});
 		$input.on("input", frappe.utils.debounce(() => aura.render_jumps($input.val()), 120));
 		$input.on("keydown", (e) => {
 			const $items = aura.$ask.find(".aura-jump");
@@ -255,8 +271,8 @@
 				<div class="aura-ask-label">${__("Jump to")}</div>
 				<div class="aura-jump-list">${hits
 					.map(
-						(dt, i) =>
-							`<button type="button" class="aura-jump${i === 0 ? "" : ""}" data-doctype="${esc(dt)}">${svg(IC.list)}<span>${esc(__(dt))}</span><small>${__("List")}</small></button>`
+						(dt) =>
+							`<button type="button" class="aura-jump" data-doctype="${esc(dt)}">${svg(IC.list)}<span>${esc(__(dt))}</span><small>${__("List")}</small></button>`
 					)
 					.join("")}</div>
 			</div>`);
@@ -438,11 +454,21 @@
 		const items = r.items || [];
 		if (items.length) {
 			if (replace) frm.clear_table("items");
+			// item_code / qty triggers fetch item details and price-list rates over ajax;
+			// wait for them to settle so the AI rate is not overwritten afterwards.
+			const settle = () => new Promise((resolve) => frappe.after_ajax(resolve));
 			for (const it of items) {
 				const row = frm.add_child("items");
 				await frappe.model.set_value(row.doctype, row.name, "item_code", it.item_code);
-				if (it.qty) await frappe.model.set_value(row.doctype, row.name, "qty", it.qty);
-				if (it.rate) await frappe.model.set_value(row.doctype, row.name, "rate", it.rate);
+				await settle();
+				if (it.qty) {
+					await frappe.model.set_value(row.doctype, row.name, "qty", it.qty);
+					await settle();
+				}
+				if (it.rate) {
+					await frappe.model.set_value(row.doctype, row.name, "rate", it.rate);
+					await settle();
+				}
 			}
 			frm.refresh_field("items");
 		}

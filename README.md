@@ -11,7 +11,7 @@ Frosted-glass surfaces over a violet → cyan aurora, Sora headings over Geist, 
 | Modes | Follows Frappe's own light / dark (`data-theme`) and persists the toggle on the User via `switch_theme` |
 | Accents | Violet, Cyan, Ember or a Custom pair — site default plus optional per-browser override from the navbar |
 | Density | Comfortable / Compact, site default + per-browser toggle |
-| Ask AI | `Ctrl/⌘ + J` command panel. Answers questions with your permitted ERP facts as context; also an offline "jump to" palette over the DocTypes you can read |
+| Ask AI | `Ctrl/⌘ + J` command panel. Answers questions using the brief facts plus the top overdue sales invoices and supplier bills due this week (only records you can read); also an offline "jump to" palette over the DocTypes you can read |
 | Brief | A "Today's brief" card on workspaces: overdue receivables, month-to-date billing vs last month, draft invoices, supplier bills due in 7 days (optionally summarised by AI). Dismissible per session |
 | Fill with AI | On Sales Invoice / Order, Quotation, Delivery Note, Purchase Order / Invoice / Receipt drafts: paste a PO or email, AI extracts party + items + qty + rate and matches them to your masters. Nothing is saved automatically |
 | Login | Aurora login with a brand hero (headline / tagline / footer from settings). Only auth pages are styled — your website keeps its Website Theme |
@@ -20,7 +20,7 @@ Frosted-glass surfaces over a violet → cyan aurora, Sora headings over Geist, 
 
 ```bash
 cd frappe-bench
-bench get-app https://github.com/TechwithZakir/ReckonAuraTheme
+bench get-app https://github.com/TechwithZakir/reckon_aura_theme
 bench --site your.site install-app reckon_aura_theme
 bench build --app reckon_aura_theme
 bench --site your.site clear-cache
@@ -37,7 +37,7 @@ The theme works fully without AI — the brief is computed from your data, and t
 3. Base URL (optional), Model, API Key
 4. Click **Test AI connection**
 
-Privacy: all data reaching the model is read with `frappe.get_list`, so it is limited to what the current user may read. The API key is stored in a Password field and never sent to the browser. Requests are rate-limited per user (`ask` 40/h, `extract_document` 60/h).
+Privacy: all data reaching the model is read with `frappe.get_list`, so it is limited to what the current user may read. The API key is stored in a Password field and never sent to the browser. Requests are rate-limited per user (`ask` 40/h, `extract_document` 60/h), and the AI endpoints are limited to desk (System) users — portal users cannot call them.
 
 ## Files
 
