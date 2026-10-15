@@ -1,0 +1,178 @@
+/* Reckon Aura Theme — auth pages (login, signup, forgot / update password).
+   Scoped to those paths so the public website keeps its Website Theme. */
+
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Geist:wght@400;500;600;700&display=swap");
+
+body[data-path="login"],
+body[data-path="update-password"] {
+	--aura-accent: #8b6dff;
+	--aura-accent-2: #00c8f0;
+	--aura-grad: linear-gradient(135deg, var(--aura-accent), var(--aura-accent-2));
+	--aura-glow: 0 8px 26px color-mix(in srgb, var(--aura-accent) 45%, transparent);
+	--aura-text: #eceaff;
+	--aura-muted: #a9a5d6;
+	--aura-line: rgba(255, 255, 255, 0.12);
+	--aura-control: rgba(255, 255, 255, 0.06);
+	min-height: 100vh;
+	margin: 0;
+	color: var(--aura-text);
+	font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	background:
+		radial-gradient(720px 560px at 0% 0%, color-mix(in srgb, var(--aura-accent) 55%, transparent), transparent 70%),
+		radial-gradient(720px 620px at 100% 100%, color-mix(in srgb, var(--aura-accent-2) 38%, transparent), transparent 70%),
+		#07070f fixed !important;
+}
+body[data-path="login"][data-aura-accent="cyan"],
+body[data-path="update-password"][data-aura-accent="cyan"] { --aura-accent: #00b4d8; --aura-accent-2: #34e3aa; }
+body[data-path="login"][data-aura-accent="ember"],
+body[data-path="update-password"][data-aura-accent="ember"] { --aura-accent: #ff6a5a; --aura-accent-2: #ffb347; }
+
+body[data-path="login"] .navbar,
+body[data-path="login"] .web-footer,
+body[data-path="login"] footer,
+body[data-path="update-password"] .navbar,
+body[data-path="update-password"] .web-footer,
+body[data-path="update-password"] footer { display: none !important; }
+
+body[data-path="login"] .page-content-wrapper,
+body[data-path="update-password"] .page-content-wrapper {
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 32px 16px;
+	background: transparent;
+}
+body[data-path="login"] main,
+body[data-path="update-password"] main { width: 100%; max-width: 440px; margin: 0 auto !important; background: transparent; }
+
+/* The card */
+body[data-path="login"] .page-card,
+body[data-path="update-password"] .page-card {
+	max-width: 420px;
+	margin: 0 auto;
+	padding: 32px 28px 26px;
+	border-radius: 24px;
+	background: rgba(255, 255, 255, 0.055) !important;
+	border: 1px solid rgba(255, 255, 255, 0.11) !important;
+	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+	backdrop-filter: blur(22px);
+	-webkit-backdrop-filter: blur(22px);
+	color: var(--aura-text);
+}
+body[data-path="login"] .page-card-head,
+body[data-path="update-password"] .page-card-head { text-align: left; padding-bottom: 6px; }
+body[data-path="login"] .page-card-head .app-logo,
+body[data-path="login"] .page-card-head img {
+	max-height: 40px;
+	width: auto;
+	border-radius: 12px;
+}
+body[data-path="login"] .page-card-head h4,
+body[data-path="update-password"] .page-card-head h4 {
+	margin-top: 14px;
+	font-family: "Sora", "Geist", sans-serif;
+	font-weight: 600;
+	font-size: 26px;
+	letter-spacing: -0.02em;
+	color: var(--aura-text);
+}
+
+body[data-path="login"] .form-control,
+body[data-path="update-password"] .form-control {
+	height: 44px;
+	border-radius: 12px !important;
+	background: var(--aura-control) !important;
+	border: 1px solid var(--aura-line) !important;
+	color: var(--aura-text) !important;
+	box-shadow: none !important;
+}
+body[data-path="login"] .form-control::placeholder { color: var(--aura-muted); }
+body[data-path="login"] .form-control:focus,
+body[data-path="update-password"] .form-control:focus {
+	border-color: var(--aura-accent) !important;
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--aura-accent) 22%, transparent) !important;
+}
+body[data-path="login"] .field-icon,
+body[data-path="login"] .toggle-password { color: var(--aura-muted); }
+body[data-path="login"] .form-group label,
+body[data-path="login"] .control-label { color: var(--aura-muted); }
+
+body[data-path="login"] .btn-primary,
+body[data-path="login"] .btn-login,
+body[data-path="update-password"] .btn-primary {
+	height: 44px;
+	border-radius: 12px !important;
+	background: var(--aura-grad) !important;
+	border: 0 !important;
+	color: #fff !important;
+	font-weight: 600;
+	box-shadow: var(--aura-glow);
+}
+body[data-path="login"] .btn-primary:hover { filter: brightness(1.1); }
+body[data-path="login"] .btn-default,
+body[data-path="login"] .btn-login-option,
+body[data-path="login"] .social-logins .btn {
+	height: 42px;
+	border-radius: 12px !important;
+	background: transparent !important;
+	border: 1px solid var(--aura-line) !important;
+	color: var(--aura-text) !important;
+}
+body[data-path="login"] .btn-default:hover,
+body[data-path="login"] .btn-login-option:hover { background: rgba(255, 255, 255, 0.06) !important; }
+body[data-path="login"] .login-divider { color: var(--aura-muted); }
+body[data-path="login"] .login-divider::before,
+body[data-path="login"] .login-divider::after { border-color: var(--aura-line) !important; }
+body[data-path="login"] a,
+body[data-path="update-password"] a { color: color-mix(in oklab, var(--aura-accent) 55%, #fff); }
+body[data-path="login"] .sign-up-message,
+body[data-path="login"] .forgot-password-message { color: var(--aura-muted); }
+
+/* Injected hero (aura_web.js) — wide screens only */
+.aura-login-hero { display: none; }
+@media (min-width: 1000px) {
+	body.aura-login .page-content-wrapper { margin-left: 50vw; width: 50vw; }
+	.aura-login-hero {
+		position: fixed;
+		inset: 0 50vw 0 0;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		gap: 32px;
+		padding: 44px 56px;
+		color: #f4f2ff;
+		border-right: 1px solid rgba(255, 255, 255, 0.08);
+	}
+	.aura-login-brand { display: flex; align-items: center; gap: 12px; font: 600 20px/1 "Sora", sans-serif; }
+	.aura-login-brand img { height: 34px; width: auto; border-radius: 10px; }
+	.aura-login-mark {
+		width: 34px;
+		height: 34px;
+		border-radius: 11px;
+		display: grid;
+		place-items: center;
+		background: var(--aura-grad);
+		box-shadow: var(--aura-glow);
+		font-size: 17px;
+	}
+	.aura-login-copy { max-width: 560px; }
+	.aura-login-copy h1 {
+		margin: 0 0 16px;
+		font: 600 clamp(34px, 3.6vw, 54px)/1.05 "Sora", sans-serif;
+		letter-spacing: -0.03em;
+		text-wrap: balance;
+		color: #fff;
+	}
+	.aura-login-copy p { margin: 0; font-size: 17px; line-height: 1.55; color: #c9c6ea; max-width: 46ch; text-wrap: pretty; }
+	.aura-login-foot {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px 24px;
+		padding-top: 16px;
+		border-top: 1px solid rgba(255, 255, 255, 0.14);
+		font-size: 13px;
+		color: #a9a5d6;
+	}
+}
