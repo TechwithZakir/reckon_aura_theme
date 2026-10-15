@@ -353,6 +353,19 @@ header.navbar {
 	border-color: var(--aura-accent) !important;
 	box-shadow: 0 0 0 3px var(--aura-accent-soft) !important;
 }
+/* Native <select> popups. The options inherit the light text colour above, but the browser
+   cannot paint the popup with our translucent control colour, so it fell back to white —
+   light text on white in dark mode. Give options a solid theme surface and tell the browser
+   which scheme each select belongs to. */
+select { color-scheme: light; }
+html[data-theme="dark"] select { color-scheme: dark; }
+select option,
+select optgroup {
+	background-color: var(--aura-solid) !important;
+	color: var(--aura-text) !important;
+}
+select option:checked { background-color: color-mix(in srgb, var(--aura-accent) 24%, var(--aura-solid)) !important; }
+select option:disabled { color: var(--aura-faint) !important; }
 .has-error .form-control,
 .has-error input { border-color: var(--aura-bad-fg) !important; }
 .control-label, .form-group .control-label { color: var(--aura-muted); font-weight: 500; }
