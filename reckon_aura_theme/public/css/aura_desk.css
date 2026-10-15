@@ -186,13 +186,32 @@ h1, h2, h3, h4,
 	letter-spacing: -0.015em;
 }
 
+/* Frosted glass, safely.
+   backdrop-filter on an element makes it a stacking context AND the containing block of its
+   position:fixed descendants, so dropdowns / awesomplete lists / drawers inside it get painted
+   under later content or placed wrongly. Rules:
+   - in-flow content (cards, list, filters, widgets, forms) never gets backdrop-filter;
+   - sticky chrome (navbar, page head, sidebar) carries the blur on a ::before layer behind its
+     content, so the element itself stays a normal box for its children. */
+.navbar::before,
+.desktop-navbar::before,
+.page-head::before,
+.body-sidebar::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	border-radius: inherit;
+	backdrop-filter: blur(var(--aura-blur)) saturate(140%);
+	-webkit-backdrop-filter: blur(var(--aura-blur)) saturate(140%);
+}
+
 /* Navbar (v15 header.navbar, v16 desktop navbar) */
 .navbar,
 .desktop-navbar,
 header.navbar {
 	background: var(--aura-glass) !important;
-	backdrop-filter: blur(var(--aura-blur)) saturate(140%);
-	-webkit-backdrop-filter: blur(var(--aura-blur)) saturate(140%);
 	border-bottom: 1px solid var(--aura-line-soft) !important;
 	box-shadow: none !important;
 }
@@ -217,12 +236,10 @@ header.navbar {
 .form-sidebar {
 	background: transparent;
 }
-/* Glass goes on the panel only. backdrop-filter makes an element a stacking context, so on
-   the container it trapped the mobile drawer's z-index (1020) and the page painted over it. */
+/* Glass goes on the panel only (never the container: a stacking context there trapped the
+   mobile drawer's z-index and the page painted over it). Blur comes from .body-sidebar::before. */
 .body-sidebar {
 	background: var(--aura-glass) !important;
-	backdrop-filter: blur(var(--aura-blur));
-	-webkit-backdrop-filter: blur(var(--aura-blur));
 	border-right: 1px solid var(--aura-line-soft) !important;
 }
 .standard-sidebar-item,
@@ -249,8 +266,6 @@ header.navbar {
 /* Page head */
 .page-head {
 	background: var(--aura-glass) !important;
-	backdrop-filter: blur(var(--aura-blur));
-	-webkit-backdrop-filter: blur(var(--aura-blur));
 	border-bottom: 1px solid var(--aura-line-soft);
 }
 .page-title .title-text { font-weight: 600; font-size: 1.35rem; }
@@ -258,7 +273,9 @@ header.navbar {
 
 /* ----------------------------------------------------------- 5. components */
 
-/* Cards & widgets get the frosted-glass surface */
+/* Cards & widgets get the glass surface — translucent over the aurora, but NO backdrop-filter:
+   these hold dropdowns (filter fields, sort, widget menus, link fields) that must rise above the
+   next card. The aurora behind them is a smooth gradient, so blur added nothing visible. */
 .frappe-card,
 .widget,
 .number-widget-box,
@@ -275,8 +292,6 @@ header.navbar {
 	border: 1px solid var(--aura-card-line) !important;
 	border-radius: var(--aura-r-card) !important;
 	box-shadow: var(--aura-shadow);
-	backdrop-filter: blur(var(--aura-blur));
-	-webkit-backdrop-filter: blur(var(--aura-blur));
 }
 .widget:hover { border-color: color-mix(in srgb, var(--aura-accent) 35%, transparent) !important; }
 
@@ -365,9 +380,8 @@ input[type="checkbox"] { accent-color: var(--aura-accent); }
 
 /* Overlays */
 .modal-content {
-	background: color-mix(in srgb, var(--aura-solid) 88%, transparent) !important;
-	backdrop-filter: blur(24px);
-	-webkit-backdrop-filter: blur(24px);
+	/* no backdrop-filter: dialogs hold link / date fields whose popups must not be trapped */
+	background: color-mix(in srgb, var(--aura-solid) 96%, transparent) !important;
 	border: 1px solid var(--aura-card-line) !important;
 	border-radius: 22px !important;
 	box-shadow: var(--aura-shadow-lg) !important;
@@ -474,7 +488,6 @@ input[type="checkbox"] { accent-color: var(--aura-accent); }
 	border: 1px solid var(--aura-line) !important;
 	border-radius: 14px !important;
 	box-shadow: var(--aura-shadow);
-	backdrop-filter: blur(var(--aura-blur));
 	transition: border-color 0.15s, transform 0.15s;
 }
 .kanban .kanban-card:hover { border-color: var(--aura-accent) !important; transform: translateY(-1px); }
@@ -508,7 +521,7 @@ input[type="checkbox"] { accent-color: var(--aura-accent); }
 .form-grid-container .form-grid {
 	border: 1px solid var(--aura-line) !important;
 	border-radius: 14px !important;
-	overflow: hidden;
+	/* overflow left to Frappe (overflow-y: hidden); forcing hidden also killed horizontal scroll */
 	background: transparent;
 }
 .form-grid .grid-heading-row {
@@ -741,8 +754,6 @@ input[type="checkbox"] { accent-color: var(--aura-accent); }
 		color-mix(in srgb, var(--aura-accent) 18%, transparent),
 		color-mix(in srgb, var(--aura-accent-2) 8%, transparent));
 	border: 1px solid color-mix(in srgb, var(--aura-accent) 32%, transparent);
-	backdrop-filter: blur(var(--aura-blur));
-	-webkit-backdrop-filter: blur(var(--aura-blur));
 }
 .aura-brief-head { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .aura-brief-title { display: flex; align-items: center; gap: 8px; font: 600 16px/1.2 var(--aura-font-head); }
@@ -833,7 +844,6 @@ input[type="checkbox"] { accent-color: var(--aura-accent); }
 		background: transparent !important;
 		border-right-color: transparent !important;
 		box-shadow: none;
-		backdrop-filter: none;
-		-webkit-backdrop-filter: none;
 	}
+	.body-sidebar-container:not(.expanded) .body-sidebar::before { display: none; }
 }
