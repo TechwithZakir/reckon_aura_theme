@@ -329,13 +329,15 @@ header.navbar {
 .btn-secondary:hover { background: var(--aura-hover) !important; }
 .btn-xs, .btn-sm { border-radius: 8px !important; }
 
-/* Inputs */
-.form-control,
-.frappe-control input,
+/* Inputs. Checkboxes and radios are excluded: Frappe draws their ticked state with a background
+   (accent colour + tick image), so forcing a background here made every box look unticked, and
+   the control radius made them round like radio buttons. */
+.form-control:not([type="checkbox"]):not([type="radio"]),
+.frappe-control input:not([type="checkbox"]):not([type="radio"]),
 .frappe-control select,
 .frappe-control textarea,
 .awesomplete input,
-.input-with-feedback {
+.input-with-feedback:not([type="checkbox"]):not([type="radio"]) {
 	background: var(--aura-control) !important;
 	border: 1px solid var(--aura-line) !important;
 	border-radius: var(--aura-r-ctl) !important;
@@ -369,7 +371,13 @@ select option:disabled { color: var(--aura-faint) !important; }
 .has-error .form-control,
 .has-error input { border-color: var(--aura-bad-fg) !important; }
 .control-label, .form-group .control-label { color: var(--aura-muted); font-weight: 500; }
-input[type="checkbox"] { accent-color: var(--aura-accent); }
+input[type="checkbox"] { accent-color: var(--aura-accent); border-radius: 4px; border-color: var(--aura-line); }
+input[type="checkbox"]:checked {
+	/* Colour only: Frappe's tick image (background-image) stays in place. */
+	background-color: var(--aura-accent) !important;
+	border-color: var(--aura-accent) !important;
+}
+input[type="checkbox"]:focus-visible { box-shadow: 0 0 0 3px var(--aura-accent-soft) !important; }
 .ql-toolbar, .ql-container { border-color: var(--aura-line) !important; }
 .ql-toolbar { border-radius: var(--aura-r-ctl) var(--aura-r-ctl) 0 0; }
 .ql-container { border-radius: 0 0 var(--aura-r-ctl) var(--aura-r-ctl); background: var(--aura-control); }
