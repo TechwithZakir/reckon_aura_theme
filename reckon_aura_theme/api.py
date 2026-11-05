@@ -16,6 +16,17 @@ from frappe.utils import add_days, add_months, cint, flt, fmt_money, get_first_d
 
 SETTINGS = "Aura Theme Settings"
 
+# Brand shown on the login page and in the Ask AI bar. Blank or stock names
+# (the framework's own) are replaced by these; a name an admin chose is kept.
+BRAND_NAME = "ReckonERP"
+BRAND_LOGO = "/assets/reckon_aura_theme/images/reckonerp-logo.webp"
+POWERED_BY = "Powered by ReckonERP"
+
+
+def resolve_brand_name(name):
+	text = str(name or "").strip()
+	return BRAND_NAME if not text or "frappe" in text.lower() or "erpnext" in text.lower() else text
+
 PARTY_FIELDS = {
 	"Sales Invoice": ("Customer", "customer"),
 	"Sales Order": ("Customer", "customer"),
@@ -27,9 +38,9 @@ PARTY_FIELDS = {
 }
 
 DEFAULT_PROMPT = (
-	"You are the assistant inside an ERPNext (Frappe) desk. Answer briefly and concretely, "
+	"You are the assistant inside an ERP desk. Answer briefly and concretely, "
 	"using only the facts in the provided context. If the context does not contain the answer, "
-	"say so and suggest where in ERPNext the user can find it (DocType or report name). "
+	"say so and suggest where in the ERP the user can find it (DocType or report name). "
 	"Use the company currency. Prefer short bullet points. Never invent figures."
 )
 
@@ -80,8 +91,8 @@ def get_public_config():
 	s = _settings()
 	return {
 		"enabled": cint(s.enable_theme),
-		"brand_name": s.brand_name or "",
-		"brand_logo": s.brand_logo or "",
+		"brand_name": resolve_brand_name(s.brand_name),
+		"brand_logo": s.brand_logo or BRAND_LOGO,
 		"accent": (s.accent or "Violet").lower(),
 		"custom_accent": s.custom_accent or "",
 		"custom_accent_2": s.custom_accent_2 or "",
@@ -104,8 +115,9 @@ def get_login_config():
 		return {"enabled": 1}
 	return {
 		"enabled": cint(s.enable_theme),
-		"brand_name": s.brand_name or "ERPNext",
-		"brand_logo": s.brand_logo or "",
+		"brand_name": resolve_brand_name(s.brand_name),
+		"brand_logo": s.brand_logo or BRAND_LOGO,
+		"powered_by": POWERED_BY,
 		"accent": (s.accent or "Violet").lower(),
 		"custom_accent": s.custom_accent or "",
 		"custom_accent_2": s.custom_accent_2 or "",

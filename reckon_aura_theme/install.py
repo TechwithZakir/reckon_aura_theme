@@ -22,7 +22,21 @@ def after_install():
 	ensure_settings()
 
 
+def brand_stock_values():
+	"""Replace a stock brand name (set from the framework's own app name) with ReckonERP."""
+	from reckon_aura_theme.api import BRAND_NAME, resolve_brand_name
+
+	if not frappe.db.exists("DocType", SETTINGS):
+		return
+	current = frappe.db.get_single_value(SETTINGS, "brand_name") or ""
+	wanted = resolve_brand_name(current)
+	if wanted != current:
+		frappe.db.set_single_value(SETTINGS, "brand_name", BRAND_NAME)
+		frappe.clear_cache()
+
+
 def after_migrate():
+	brand_stock_values()
 	# Only seed a site whose settings were never saved. Re-seeding on every migrate
 	# would bring back text an admin cleared on purpose (e.g. the login headline).
 	if not frappe.db.exists("DocType", SETTINGS):
@@ -39,11 +53,7 @@ def ensure_settings():
 		if doc.get(field) in (None, ""):
 			doc.set(field, value)
 	if not doc.brand_name:
-		doc.brand_name = (
-			frappe.db.get_single_value("Website Settings", "app_name")
-			or frappe.db.get_single_value("System Settings", "app_name")
-			or "ERPNext"
-		)
+		doc.brand_name = "ReckonERP"
 	doc.flags.ignore_permissions = True
 	doc.flags.ignore_mandatory = True
 	doc.save()

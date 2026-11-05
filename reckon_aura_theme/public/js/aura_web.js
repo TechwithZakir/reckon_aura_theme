@@ -20,8 +20,9 @@
 		}
 		if (document.querySelector(".aura-login-hero")) return;
 
-		const brand = esc(c.brand_name || "ERPNext");
-		const logo = c.brand_logo ? `<img src="${esc(c.brand_logo)}" alt="">` : `<span class="aura-login-mark">✦</span>`;
+		const brand = esc(c.brand_name || "ReckonERP");
+		const logoUrl = c.brand_logo || "/assets/reckon_aura_theme/images/reckonerp-logo.webp";
+		const logo = `<img src="${esc(logoUrl)}" alt="">`;
 		const hero = document.createElement("aside");
 		hero.className = "aura-login-hero";
 		hero.setAttribute("aria-hidden", "true");
@@ -31,7 +32,7 @@
 				<h1>${esc(c.headline || t("Your ERP, now with an AI that reads every ledger."))}</h1>
 				${c.tagline ? `<p>${esc(c.tagline)}</p>` : ""}
 			</div>
-			<div class="aura-login-foot">${c.footer ? `<span>${esc(c.footer)}</span>` : ""}<span>${t("Powered by Frappe")}</span></div>`;
+			<div class="aura-login-foot">${c.footer ? `<span>${esc(c.footer)}</span>` : ""}<span>${esc(c.powered_by || t("Powered by ReckonERP"))}</span></div>`;
 		document.body.prepend(hero);
 		document.body.classList.add("aura-login");
 	}

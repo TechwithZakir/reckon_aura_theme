@@ -178,7 +178,7 @@
 
 	aura.build_ask = function () {
 		if (aura.$ask) return aura.$ask;
-		const brand = esc(cfg().brand_name || "ERPNext");
+		const brand = esc(cfg().brand_name || "ReckonERP");
 		aura.$ask = $(`
 			<div class="aura-ask-backdrop" role="presentation">
 				<div class="aura-ask" role="dialog" aria-modal="true" aria-label="${__("Ask AI")}">
