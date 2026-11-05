@@ -19,7 +19,7 @@
 	function contactList(k) {
 		if (!k) return "";
 		const row = (ic, label, href, text, external) =>
-			`<li>${icon(ic)}<span class="aura-login-label">${t(label)}</span><a href="${esc(href)}"${
+			`<li>${icon(ic)}<span class="aura-login-label">${t(label)}: </span><a href="${esc(href)}"${
 				external ? ' target="_blank" rel="noopener"' : ""
 			}>${esc(text)}</a></li>`;
 		return `<ul class="aura-login-contact">
