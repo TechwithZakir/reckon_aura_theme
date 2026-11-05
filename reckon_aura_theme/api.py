@@ -21,6 +21,14 @@ SETTINGS = "Aura Theme Settings"
 BRAND_NAME = "ReckonERP"
 BRAND_LOGO = "/assets/reckon_aura_theme/images/reckonerp-logo.webp"
 POWERED_BY = "Powered by ReckonERP"
+OWNER = "Reckon Technologies Ltd."
+CONTACT = {
+	"website": "https://www.reckon.tech",
+	"website_label": "www.reckon.tech",
+	"email": "hello@reckon.tech",
+	"whatsapp": "+8801325-009955",
+	"whatsapp_number": "8801325009955",
+}
 
 
 def resolve_brand_name(name):
@@ -118,6 +126,8 @@ def get_login_config():
 		"brand_name": resolve_brand_name(s.brand_name),
 		"brand_logo": s.brand_logo or BRAND_LOGO,
 		"powered_by": POWERED_BY,
+		"owner": OWNER,
+		"contact": CONTACT,
 		"accent": (s.accent or "Violet").lower(),
 		"custom_accent": s.custom_accent or "",
 		"custom_accent_2": s.custom_accent_2 or "",

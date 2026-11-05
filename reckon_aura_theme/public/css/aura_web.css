@@ -168,11 +168,23 @@ body[data-path="login"] .forgot-password-message { color: var(--aura-muted); }
 	.aura-login-copy p { margin: 0; font-size: 17px; line-height: 1.55; color: #c9c6ea; max-width: 46ch; text-wrap: pretty; }
 	.aura-login-foot {
 		display: flex;
-		flex-wrap: wrap;
-		gap: 10px 24px;
+		flex-direction: column;
+		gap: 6px;
 		padding-top: 16px;
 		border-top: 1px solid rgba(255, 255, 255, 0.14);
 		font-size: 13px;
 		color: #a9a5d6;
 	}
+	.aura-login-foot p { margin: 0; }
+	.aura-login-powered { font-weight: 700; color: #d9d6ff; }
+	.aura-login-contact { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 8px; }
+	.aura-login-contact li { display: flex; align-items: center; gap: 10px; }
+	.aura-login-label { color: #a9a5d6; min-width: 112px; }
+	.aura-login-contact a { color: #fff; text-decoration: none; font-weight: 600; }
+	.aura-login-contact a:hover { text-decoration: underline; }
+	.aura-login-ic {
+		width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center;
+		background: rgba(255, 255, 255, 0.12); color: #fff; flex: none;
+	}
+	.aura-login-ic svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 }
