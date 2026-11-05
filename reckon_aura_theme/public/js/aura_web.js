@@ -8,6 +8,14 @@
 		String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 	const t = (s) => (window.__ ? window.__(s) : s);
 
+	// Sign-in pages are not for search results (robots.txt also disallows them).
+	if (!document.querySelector('meta[name="robots"]')) {
+		const robots = document.createElement("meta");
+		robots.name = "robots";
+		robots.content = "noindex,nofollow";
+		document.head.appendChild(robots);
+	}
+
 	const ICONS = {
 		globe: '<path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
 		mail: '<path d="M3 6h18v12H3zM3 7l9 7 9-7"/>',
