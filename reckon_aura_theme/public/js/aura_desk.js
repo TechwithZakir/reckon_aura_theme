@@ -1,7 +1,7 @@
 /* Reckon Aura Theme — desk runtime for Frappe / ERPNext v16
  * - applies site + per-browser theme prefs (accent, density)
  * - navbar tools: Ask AI, density, accent, light/dark
- * - Ask AI command panel (Ctrl/⌘+J): AI answers + offline "jump to" palette
+ * - Ask AI chat (Ctrl/⌘+J): multi-turn ERP support with voice input and page jumps
  * - brief card on workspaces
  * - "Fill with AI" on sales / purchase transactions
  */
@@ -22,8 +22,10 @@
 		list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
 		arrow: "M5 12h14M13 6l6 6-6 6",
 		x: "M18 6 6 18M6 6l12 12",
-		minimize: "M5 12h14",
-		dock: "M4 4h16v16H4zM14 4v16",
+		dock: "M4 4h16v16H4zM10 4v16",
+		newChat: "M12 5v14M5 12h14",
+		mic: "M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zM19 11a7 7 0 0 1-14 0M12 18v4M8 22h8",
+		send: "M22 2 11 13M22 2 15 22 11 13 2 9 22 2",
 		select: "M8 5h12v14H8zM4 17V3h14",
 	};
 
@@ -120,7 +122,6 @@
 		const c = cfg();
 		if (c.enabled === 0 || !on(c.ai_bar)) {
 			aura.close_ask();
-			aura.$askRestore && aura.$askRestore.hide();
 			document.querySelectorAll('.aura-tools [data-aura-action="ask"]').forEach((el) => el.remove());
 		}
 		if (c.enabled === 0 || document.querySelector(".aura-tools")) return;
@@ -184,54 +185,64 @@
 		__("Which supplier bills are due this week?"),
 	];
 
+	aura.ask_history = [];
+	aura.ask_pending = false;
+	aura.ask_recognition = null;
+
 	aura.build_ask = function () {
 		if (aura.$ask) return aura.$ask;
 		const brand = esc(cfg().brand_name || "ReckonERP");
 		aura.$ask = $(`
 			<div class="aura-ask-backdrop" role="presentation">
-				<div class="aura-ask" role="dialog" aria-modal="true" aria-label="${__("Ask AI")}">
-					<div class="aura-ask-input">
-						<span class="aura-spark-badge">✦</span>
-						<input type="text" autocomplete="off" spellcheck="false"
-							placeholder="${__("Ask {0} AI, or type to jump to a page…", [brand])}">
+				<section class="aura-ask" role="dialog" aria-modal="true" aria-label="${__("Ask AI")}">
+					<header class="aura-ask-header">
+						<div class="aura-ask-brand">
+							<span class="aura-spark-badge">✦</span>
+							<div><strong>${brand} AI</strong><small>${__("ERP support assistant")}</small></div>
+						</div>
 						<div class="aura-ask-actions">
-							<button type="button" class="aura-ask-tool aura-ask-select-input" data-aura-select="input" title="${__(
-								"Select all input"
-							)}" aria-label="${__("Select all input")}">${svg(IC.select, 14)}<span>${__("Select all")}</span></button>
+							<button type="button" class="aura-ask-tool" data-aura-ask-action="new-chat" title="${__(
+								"New chat"
+							)}" aria-label="${__("New chat")}">${svg(IC.newChat, 15)}</button>
 							<button type="button" class="aura-ask-tool" data-aura-ask-action="dock" aria-pressed="false" title="${__(
-								"Dock to right"
-							)}" aria-label="${__("Dock to right")}">${svg(IC.dock, 14)}</button>
-							<button type="button" class="aura-ask-tool" data-aura-ask-action="minimize" title="${__(
-								"Minimize"
-							)}" aria-label="${__("Minimize")}">${svg(IC.minimize, 14)}</button>
+								"Dock to left"
+							)}" aria-label="${__("Dock to left")}">${svg(IC.dock, 15)}</button>
 							<button type="button" class="aura-ask-tool" data-aura-ask-action="close" title="${__(
 								"Close"
-							)}" aria-label="${__("Close")}">${svg(IC.x, 14)}</button>
+							)}" aria-label="${__("Close")}">${svg(IC.x, 15)}</button>
 							<kbd>Esc</kbd>
 						</div>
+					</header>
+					<div class="aura-ask-body">
+						<div class="aura-ask-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
 					</div>
-					<div class="aura-ask-chips">${CHIPS.map((c) => `<button type="button" class="aura-chip">${esc(c)}</button>`).join("")}</div>
-					<div class="aura-ask-body"></div>
-				</div>
+					<footer class="aura-ask-composer">
+						<div class="aura-ask-compose">
+							<textarea rows="1" maxlength="2000" autocomplete="off" spellcheck="true"
+								placeholder="${__("Message {0} AI…", [brand])}" aria-label="${__("Message")}"></textarea>
+							<div class="aura-ask-compose-actions">
+								<button type="button" class="aura-ask-tool aura-ask-select-input" title="${__(
+									"Select all input"
+								)}" aria-label="${__("Select all input")}">${svg(IC.select, 15)}</button>
+								<button type="button" class="aura-ask-tool aura-ask-voice" data-aura-ask-action="voice"
+									aria-pressed="false" title="${__("Start voice input")}" aria-label="${__("Start voice input")}">${svg(IC.mic, 16)}</button>
+								<button type="button" class="aura-ask-send" data-aura-ask-action="send"
+									title="${__("Send message")}" aria-label="${__("Send message")}">${svg(IC.send, 16)}</button>
+							</div>
+						</div>
+						<div class="aura-ask-disclaimer">${__("Enter to send · Shift+Enter for a new line · AI can make mistakes")}</div>
+					</footer>
+				</section>
 			</div>`).appendTo(document.body);
-		aura.$askRestore = $(
-			`<button type="button" class="aura-ask-restore" aria-label="${__("Restore Ask AI")}"><span class="aura-spark">✦</span>${__(
-				"Ask AI"
-			)}</button>`
-		)
-				.appendTo(document.body)
-			.hide();
-
-		const $input = aura.$ask.find("input");
+		const $textarea = aura.$ask.find("textarea");
+		aura.render_ask_welcome();
 		aura.$ask.on("mousedown", (e) => e.target === aura.$ask[0] && aura.close_ask());
-		aura.$askRestore.on("click", () => aura.restore_ask());
-		aura.$ask.on("click", "[data-aura-select]", function () {
-			if (this.getAttribute("data-aura-select") === "input") {
-				$input[0].focus();
-				$input[0].select();
-				return;
-			}
-			const answer = aura.$ask.find(".aura-answer").last()[0];
+		aura.$ask.on("click", ".aura-ask-select-input", function () {
+			$textarea[0].focus();
+			$textarea[0].select();
+		});
+		aura.$ask.on("click", "[data-aura-select-output]", function () {
+			const answer = $(this).closest(".aura-chat-turn").find(".aura-chat-content")[0];
 			if (!answer) return;
 			const selection = window.getSelection();
 			if (!selection) return;
@@ -243,11 +254,13 @@
 		aura.$ask.on("click", "[data-aura-ask-action]", function () {
 			const action = this.getAttribute("data-aura-ask-action");
 			if (action === "dock") aura.toggle_ask_dock();
-			else if (action === "minimize") aura.minimize_ask();
+			else if (action === "new-chat") aura.new_ask_chat();
+			else if (action === "voice") aura.toggle_ask_voice();
+			else if (action === "send") aura.submit_ask();
 			else if (action === "close") aura.close_ask();
 		});
 		aura.$ask.on("click", ".aura-chip", function () {
-			$input.val(this.textContent);
+			$textarea.val(this.textContent);
 			aura.submit_ask();
 		});
 		aura.$ask.on("click", ".aura-jump", function () {
@@ -255,11 +268,10 @@
 			aura.close_ask();
 			frappe.set_route("List", dt);
 		});
-		// Keep keyboard focus inside the modal panel.
 		aura.$ask.on("keydown", (e) => {
 			if (e.key === "Escape") return aura.close_ask();
 			if (e.key !== "Tab" || aura.$ask.hasClass("is-docked")) return;
-			const $f = aura.$ask.find("input, button").filter(":visible");
+			const $f = aura.$ask.find("textarea, button:not(:disabled)").filter(":visible");
 			if (!$f.length) return;
 			const first = $f[0];
 			const last = $f[$f.length - 1];
@@ -271,59 +283,182 @@
 				first.focus();
 			}
 		});
-		$input.on("input", frappe.utils.debounce(() => aura.render_jumps($input.val()), 120));
-		$input.on("keydown", (e) => {
+		$textarea.on("input", frappe.utils.debounce(() => {
+			aura.resize_ask_input();
+			aura.render_jumps($textarea.val());
+		}, 120));
+		$textarea.on("keydown", (e) => {
 			const $items = aura.$ask.find(".aura-jump");
 			const $active = $items.filter(".is-active");
-			if (e.key === "Escape") aura.close_ask();
-			else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+			if ((e.key === "ArrowDown" || e.key === "ArrowUp") && $items.length) {
 				e.preventDefault();
 				let i = $items.index($active) + (e.key === "ArrowDown" ? 1 : -1);
 				i = Math.max(0, Math.min($items.length - 1, i));
 				$items.removeClass("is-active").eq(i).addClass("is-active");
-			} else if (e.key === "Enter") {
+			} else if (e.key === "Enter" && !e.shiftKey) {
 				e.preventDefault();
 				if ($active.length) $active.trigger("click");
 				else aura.submit_ask();
 			}
 		});
+		const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+		if (!Recognition) {
+			aura.$ask.find(".aura-ask-voice")
+				.prop("disabled", true)
+				.attr("title", __("Voice input is not supported in this browser"));
+		}
 		return aura.$ask;
+	};
+
+	aura.render_ask_welcome = function () {
+		if (!aura.$ask) return;
+		const brand = esc(cfg().brand_name || "ReckonERP");
+		aura.$ask.find(".aura-ask-messages").html(`
+			<div class="aura-ask-welcome">
+				<span class="aura-ask-welcome-icon">✦</span>
+				<h2>${__("How can I help with {0}?", [brand])}</h2>
+				<p>${__("Ask about ERPNext features, workflows, or what to do next.")}</p>
+				<div class="aura-ask-chips">${CHIPS.map((c) => `<button type="button" class="aura-chip">${esc(c)}</button>`).join("")}</div>
+			</div>`);
+	};
+
+	aura.render_ask_message = function (role, content, state) {
+		const isUser = role === "user";
+		const $turn = isUser
+			? $(`<article class="aura-chat-turn aura-chat-turn--user"><div class="aura-chat-bubble"></div></article>`)
+			: $(`<article class="aura-chat-turn aura-chat-turn--assistant">
+					<div class="aura-chat-avatar">✦</div>
+					<div class="aura-chat-message">
+						<div class="aura-chat-label">${esc(cfg().brand_name || "ReckonERP")}</div>
+						<div class="aura-chat-content"></div>
+						<button type="button" class="aura-ask-tool aura-chat-select" data-aura-select-output
+							title="${__("Select all answer")}" aria-label="${__("Select all answer")}">${svg(IC.select, 13)}</button>
+					</div>
+				</article>`);
+
+		if (isUser) {
+			$turn.find(".aura-chat-bubble").text(content);
+		} else {
+			const $content = $turn.find(".aura-chat-content");
+			if (state === "pending") {
+				$content.html(`<span class="aura-thinking"><i></i><i></i><i></i></span>`);
+			} else if (state === "error") {
+				$content.addClass("is-error").text(content);
+			} else if (state === "note") {
+				$content.addClass("is-note").text(content);
+			} else {
+				$content.html(aura.format_answer(content));
+			}
+		}
+
+		aura.$ask.find(".aura-ask-messages").append($turn);
+		aura.scroll_ask_to_bottom();
+		return $turn;
+	};
+
+	aura.resize_ask_input = function () {
+		if (!aura.$ask) return;
+		const textarea = aura.$ask.find("textarea")[0];
+		textarea.style.height = "auto";
+		textarea.style.height = Math.min(textarea.scrollHeight, 140) + "px";
+	};
+
+	aura.scroll_ask_to_bottom = function () {
+		const body = aura.$ask && aura.$ask.find(".aura-ask-body")[0];
+		if (body) body.scrollTop = body.scrollHeight;
+	};
+
+	aura.new_ask_chat = function () {
+		if (!aura.$ask || aura.ask_pending) return;
+		aura.ask_history = [];
+		aura.$ask.find(".aura-chat-turn, .aura-jumps").remove();
+		aura.render_ask_welcome();
+		aura.$ask.find("textarea").val("").trigger("input").trigger("focus");
+	};
+
+	aura.sync_ask_dock_layout = function () {
+		if (!aura.$ask) return;
+		const docked = aura.$ask.hasClass("is-open") && aura.$ask.hasClass("is-docked");
+		document.body.classList.toggle("aura-ask-page-reflow", docked);
+		aura.$ask.find(".aura-ask").attr("aria-modal", docked ? "false" : "true");
 	};
 
 	aura.open_ask = function () {
 		if (!on(cfg().ai_bar)) return;
 		const $a = aura.build_ask();
-		$a.removeClass("is-minimized").addClass("is-open");
-		aura.$askRestore.hide();
-		const $input = $a.find("input");
-		aura.render_jumps($input.val());
-		setTimeout(() => $input.trigger("focus").select(), 20);
+		$a.addClass("is-open");
+		aura.sync_ask_dock_layout();
+		setTimeout(() => $a.find("textarea").trigger("focus"), 20);
 	};
 
 	aura.toggle_ask_dock = function () {
 		const docked = aura.$ask.toggleClass("is-docked").hasClass("is-docked");
 		aura.$ask.find('[data-aura-ask-action="dock"]')
 			.attr("aria-pressed", docked ? "true" : "false")
-			.attr("title", __(docked ? "Undock" : "Dock to right"))
-			.attr("aria-label", __(docked ? "Undock" : "Dock to right"));
-		aura.$ask.find(".aura-ask").attr("aria-modal", docked ? "false" : "true");
+			.attr("title", __(docked ? "Undock" : "Dock to left"))
+			.attr("aria-label", __(docked ? "Undock" : "Dock to left"));
+		aura.sync_ask_dock_layout();
 	};
 
-	aura.minimize_ask = function () {
-		if (!aura.$ask) return;
-		aura.$ask.removeClass("is-open").addClass("is-minimized");
-		aura.$askRestore.show();
-	};
+	aura.toggle_ask_voice = function () {
+		if (aura.ask_recognition) {
+			aura.ask_recognition.stop();
+			return;
+		}
+		const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+		if (!Recognition) {
+			frappe.show_alert({ message: __("Voice input is not supported in this browser"), indicator: "orange" });
+			return;
+		}
 
-	aura.restore_ask = function () {
-		if (!on(cfg().ai_bar)) return aura.close_ask();
-		aura.$ask.removeClass("is-minimized").addClass("is-open");
-		aura.$askRestore.hide();
+		const recognition = new Recognition();
+		const $voice = aura.$ask.find(".aura-ask-voice");
+		const language = (frappe.boot && frappe.boot.lang) || document.documentElement.lang || "en";
+		recognition.lang = language === "bn" ? "bn-BD" : language === "en" ? "en-US" : language;
+		recognition.continuous = false;
+		recognition.interimResults = false;
+		recognition.onresult = (event) => {
+			const transcript = Array.from(event.results)
+				.filter((result) => result.isFinal)
+				.map((result) => result[0].transcript)
+				.join(" ")
+				.trim();
+			if (!transcript) return;
+			const $textarea = aura.$ask.find("textarea");
+			const current = $textarea.val().trim();
+			$textarea.val(current ? current + " " + transcript : transcript).trigger("input");
+			aura.resize_ask_input();
+		};
+		recognition.onerror = (event) => {
+			if (event.error !== "aborted") {
+				frappe.show_alert({
+					message: event.error === "not-allowed" ? __("Microphone permission was denied") : __("Voice input failed"),
+					indicator: "orange",
+				});
+			}
+		};
+		recognition.onend = () => {
+			if (aura.ask_recognition === recognition) aura.ask_recognition = null;
+			$voice.removeClass("is-listening").attr("aria-pressed", "false");
+		};
+		aura.ask_recognition = recognition;
+		$voice.addClass("is-listening").attr("aria-pressed", "true");
+		try {
+			recognition.start();
+		} catch (error) {
+			aura.ask_recognition = null;
+			$voice.removeClass("is-listening").attr("aria-pressed", "false");
+			frappe.show_alert({
+				message: __("Could not start voice input: {0}", [(error && error.message) || ""]),
+				indicator: "orange",
+			});
+		}
 	};
 
 	aura.close_ask = function () {
-		if (aura.$ask) aura.$ask.removeClass("is-open is-minimized");
-		aura.$askRestore && aura.$askRestore.hide();
+		if (aura.ask_recognition) aura.ask_recognition.stop();
+		if (aura.$ask) aura.$ask.removeClass("is-open");
+		document.body.classList.remove("aura-ask-page-reflow");
 	};
 
 	aura.render_jumps = function (q) {
@@ -361,35 +496,53 @@
 
 	aura.submit_ask = function () {
 		const $a = aura.$ask;
-		const q = ($a.find("input").val() || "").trim();
+		if (aura.ask_pending) return;
+		const $input = $a.find("textarea");
+		const q = ($input.val() || "").trim();
 		if (!q) return;
-		const $body = $a.find(".aura-ask-body");
-		$body.find(".aura-answer-wrap").remove();
-		const $wrap = $(`
-			<div class="aura-answer-wrap">
-				<div class="aura-answer-head">
-					<div class="aura-ask-label">✦ ${__("Answer")}</div>
-					<button type="button" class="aura-ask-tool aura-answer-select" data-aura-select="output"
-						title="${__("Select all answer")}" aria-label="${__("Select all answer")}">
-						${svg(IC.select, 13)}<span>${__("Select all")}</span>
-					</button>
-				</div>
-			</div>`).prependTo($body);
-
+		$a.find(".aura-ask-welcome, .aura-jumps").remove();
+		aura.render_ask_message("user", q);
 		if (!cfg().ai_ready) {
-			$wrap.append(
-				`<div class="aura-answer is-note">${__(
-					"AI answers are not set up yet. A System Manager can add a model and API key in Aura Theme Settings. Meanwhile, matching pages are listed below."
-				)}</div>`
+			$input.val(q);
+			aura.resize_ask_input();
+			aura.render_jumps(q);
+			aura.render_ask_message(
+				"assistant",
+				__("AI answers are not set up yet. A System Manager can add a model and API key in Aura Theme Settings."),
+				"note"
 			);
 			return;
 		}
-		const $ans = $(`<div class="aura-answer"><span class="aura-thinking"><i></i><i></i><i></i></span></div>`).appendTo($wrap);
+		$input.val("").trigger("input");
+		aura.resize_ask_input();
+		const history = aura.ask_history.slice(-12);
+		const $answer = aura.render_ask_message("assistant", "", "pending");
+		aura.ask_pending = true;
+		$a.find('[data-aura-ask-action="send"], [data-aura-ask-action="new-chat"]').prop("disabled", true);
 		frappe
-			.xcall("reckon_aura_theme.api.ask", { question: q, route: frappe.get_route_str ? frappe.get_route_str() : "" })
-			.then((r) => $ans.html(aura.format_answer((r && r.answer) || __("No answer."))))
+			.xcall("reckon_aura_theme.api.ask", {
+				question: q,
+				route: frappe.get_route_str ? frappe.get_route_str() : "",
+				history: JSON.stringify(history),
+			})
+			.then((r) => {
+				const answer = (r && r.answer) || __("No answer.");
+				$answer.find(".aura-chat-content").html(aura.format_answer(answer));
+				aura.ask_history = aura.ask_history.concat(
+					{ role: "user", content: q },
+					{ role: "assistant", content: answer }
+				).slice(-12);
+				aura.scroll_ask_to_bottom();
+				aura.ask_pending = false;
+				$a.find('[data-aura-ask-action="send"], [data-aura-ask-action="new-chat"]').prop("disabled", false);
+			})
 			.catch((e) => {
-				$ans.addClass("is-error").text(__("Could not get an answer. {0}", [(e && e.message) || ""]));
+				$answer.find(".aura-chat-content").addClass("is-error").text(
+					__("Could not get an answer. {0}", [(e && e.message) || ""])
+				);
+				aura.scroll_ask_to_bottom();
+				aura.ask_pending = false;
+				$a.find('[data-aura-ask-action="send"], [data-aura-ask-action="new-chat"]').prop("disabled", false);
 			});
 	};
 

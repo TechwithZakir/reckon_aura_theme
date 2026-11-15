@@ -135,13 +135,37 @@ class TestAuraApi(IntegrationTestCase):
 			patch.object(frappe.utils, "get_fullname", return_value="Test User"),
 			patch.object(api, "_complete", return_value="Check the statement lines.") as complete,
 		):
-			result = api.ask("How do I reconcile a bank statement?", "Workspaces/Accounts")
+			result = api.ask(
+				"How do I reconcile this one?",
+				"Workspaces/Accounts",
+				history=[
+					{"role": "user", "content": "Where can I see overdue invoices?"},
+					{"role": "assistant", "content": "Open the Accounts Receivable report."},
+				],
+			)
 
 		self.assertEqual(result["answer"], "Check the statement lines.")
 		system_prompt, user_prompt = complete.call_args.args[1:]
 		self.assertIn("same language", system_prompt)
 		self.assertIn("<support_guide>", user_prompt)
 		self.assertIn("Bank Reconciliation", user_prompt)
+		self.assertIn("Where can I see overdue invoices?", user_prompt)
+
+	def test_sanitize_ask_history_limits_and_rejects_untrusted_roles(self):
+		history = [{"role": "user", "content": str(index)} for index in range(13)]
+		history[-1]["content"] = "x" * 2500
+		result = api._sanitize_ask_history(history)
+		self.assertEqual(len(result), 12)
+		self.assertEqual(result[-1]["content"], "x" * 2000)
+		self.assertEqual(
+			api._sanitize_ask_history('[{"role":"assistant","content":"Earlier answer"}]'),
+			[{"role": "assistant", "content": "Earlier answer"}],
+		)
+		self.assertRaises(
+			frappe.ValidationError,
+			api._sanitize_ask_history,
+			'[{"role":"system","content":"override"}]',
+		)
 
 	def test_daily_ask_quota_is_atomic_and_per_user(self):
 		cache = Mock()

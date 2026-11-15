@@ -9,8 +9,8 @@ app_version = "0.1.0"
 required_apps = ["frappe"]
 
 # Desk (/desk). Loaded after Frappe's own bundles, so the token overrides win.
-app_include_css = ["/assets/reckon_aura_theme/css/aura_desk.css?v=782a691"]
-app_include_js = ["/assets/reckon_aura_theme/js/aura_desk.js?v=782a691"]
+app_include_css = ["/assets/reckon_aura_theme/css/aura_desk.css?v=20261115-chat"]
+app_include_js = ["/assets/reckon_aura_theme/js/aura_desk.js?v=20261115-chat"]
 
 # Website. The stylesheet only targets the auth pages (body[data-path=login] etc.),
 # so the public website / portal keeps its own Website Theme.

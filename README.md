@@ -11,7 +11,7 @@ Frosted-glass surfaces over a violet → cyan aurora, Sora headings over Geist, 
 | Modes | Follows Frappe's own light / dark (`data-theme`) and persists the toggle on the User via `switch_theme` |
 | Accents | Violet, Cyan, Ember or a Custom pair — site default plus optional per-browser override from the navbar |
 | Density | Comfortable / Compact, site default + per-browser toggle |
-| Ask AI | `Ctrl/⌘ + J` panel with selectable prompt/answer text, minimize and right-dock controls. Answers in the user's language using the Accounts support guide, brief facts, and permitted finance records |
+| Ask AI | `Ctrl/⌘ + J` ChatGPT-style multi-turn assistant with a left dock that reflows the Desk, bottom composer, voice dictation, and selectable messages. Answers in the user's language using the Accounts support guide, brief facts, and permitted finance records |
 | Brief | A "Today's brief" card on workspaces: overdue receivables, month-to-date billing vs last month, draft invoices, supplier bills due in 7 days (optionally summarised by AI). Dismissible per session |
 | Fill with AI | On Sales Invoice / Order, Quotation, Delivery Note, Purchase Order / Invoice / Receipt drafts: paste a PO or email, AI extracts party + items + qty + rate and matches them to your masters. Nothing is saved automatically |
 | Login | Aurora login with a brand hero (headline / tagline / footer from settings). Only auth pages are styled — your website keeps its Website Theme |
@@ -48,7 +48,7 @@ Privacy: live ERP records reaching the model are read with `frappe.get_list`, so
 
 Ask AI uses the official ERPNext accounting documentation as the authority for standard behavior. Reckon Accounts notes clarify its custom reports; they do not imply that the add-on is installed on every site. Replies follow the user's language, including Bangla. This first support-guide milestone is advisory only.
 
-**Ask AI quota:** Aura Theme Settings can set a daily Ask AI limit per Desk user (default 10). Set it to `0` to disable the daily cap; the existing hourly rate limit remains. Disabling **Enable Ask AI** hides its launcher and panel and rejects server requests.
+**Ask AI quota:** Aura Theme Settings can set a daily Ask AI limit per Desk user (default 10). Set it to `0` to disable the daily cap; the existing hourly rate limit remains. Disabling **Enable Ask AI** hides its launcher and panel and rejects server requests. Conversation history remains in memory in the current Desk page and is limited to the latest six turns sent for context. Voice dictation uses the browser's built-in speech recognition and requires microphone permission.
 
 ## Files
 
