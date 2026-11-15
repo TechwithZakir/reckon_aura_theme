@@ -22,6 +22,9 @@
 		list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
 		arrow: "M5 12h14M13 6l6 6-6 6",
 		x: "M18 6 6 18M6 6l12 12",
+		minimize: "M5 12h14",
+		dock: "M4 4h16v16H4zM14 4v16",
+		select: "M8 5h12v14H8zM4 17V3h14",
 	};
 
 	const esc = (v) => frappe.utils.escape_html(v == null ? "" : String(v));
@@ -114,8 +117,13 @@
 	};
 
 	aura.mount_tools = function () {
-		if (cfg().enabled === 0 || document.querySelector(".aura-tools")) return;
 		const c = cfg();
+		if (c.enabled === 0 || !on(c.ai_bar)) {
+			aura.close_ask();
+			aura.$askRestore && aura.$askRestore.hide();
+			document.querySelectorAll('.aura-tools [data-aura-action="ask"]').forEach((el) => el.remove());
+		}
+		if (c.enabled === 0 || document.querySelector(".aura-tools")) return;
 		const parts = [];
 		if (on(c.ai_bar)) {
 			parts.push(
@@ -186,15 +194,58 @@
 						<span class="aura-spark-badge">✦</span>
 						<input type="text" autocomplete="off" spellcheck="false"
 							placeholder="${__("Ask {0} AI, or type to jump to a page…", [brand])}">
-						<kbd>Esc</kbd>
+						<div class="aura-ask-actions">
+							<button type="button" class="aura-ask-tool aura-ask-select-input" data-aura-select="input" title="${__(
+								"Select all input"
+							)}" aria-label="${__("Select all input")}">${svg(IC.select, 14)}<span>${__("Select all")}</span></button>
+							<button type="button" class="aura-ask-tool" data-aura-ask-action="dock" aria-pressed="false" title="${__(
+								"Dock to right"
+							)}" aria-label="${__("Dock to right")}">${svg(IC.dock, 14)}</button>
+							<button type="button" class="aura-ask-tool" data-aura-ask-action="minimize" title="${__(
+								"Minimize"
+							)}" aria-label="${__("Minimize")}">${svg(IC.minimize, 14)}</button>
+							<button type="button" class="aura-ask-tool" data-aura-ask-action="close" title="${__(
+								"Close"
+							)}" aria-label="${__("Close")}">${svg(IC.x, 14)}</button>
+							<kbd>Esc</kbd>
+						</div>
 					</div>
 					<div class="aura-ask-chips">${CHIPS.map((c) => `<button type="button" class="aura-chip">${esc(c)}</button>`).join("")}</div>
 					<div class="aura-ask-body"></div>
 				</div>
 			</div>`).appendTo(document.body);
+		aura.$askRestore = $(
+			`<button type="button" class="aura-ask-restore" aria-label="${__("Restore Ask AI")}"><span class="aura-spark">✦</span>${__(
+				"Ask AI"
+			)}</button>`
+		)
+				.appendTo(document.body)
+			.hide();
 
 		const $input = aura.$ask.find("input");
 		aura.$ask.on("mousedown", (e) => e.target === aura.$ask[0] && aura.close_ask());
+		aura.$askRestore.on("click", () => aura.restore_ask());
+		aura.$ask.on("click", "[data-aura-select]", function () {
+			if (this.getAttribute("data-aura-select") === "input") {
+				$input[0].focus();
+				$input[0].select();
+				return;
+			}
+			const answer = aura.$ask.find(".aura-answer").last()[0];
+			if (!answer) return;
+			const selection = window.getSelection();
+			if (!selection) return;
+			const range = document.createRange();
+			range.selectNodeContents(answer);
+			selection.removeAllRanges();
+			selection.addRange(range);
+		});
+		aura.$ask.on("click", "[data-aura-ask-action]", function () {
+			const action = this.getAttribute("data-aura-ask-action");
+			if (action === "dock") aura.toggle_ask_dock();
+			else if (action === "minimize") aura.minimize_ask();
+			else if (action === "close") aura.close_ask();
+		});
 		aura.$ask.on("click", ".aura-chip", function () {
 			$input.val(this.textContent);
 			aura.submit_ask();
@@ -207,7 +258,7 @@
 		// Keep keyboard focus inside the modal panel.
 		aura.$ask.on("keydown", (e) => {
 			if (e.key === "Escape") return aura.close_ask();
-			if (e.key !== "Tab") return;
+			if (e.key !== "Tab" || aura.$ask.hasClass("is-docked")) return;
 			const $f = aura.$ask.find("input, button").filter(":visible");
 			if (!$f.length) return;
 			const first = $f[0];
@@ -242,14 +293,37 @@
 	aura.open_ask = function () {
 		if (!on(cfg().ai_bar)) return;
 		const $a = aura.build_ask();
-		$a.addClass("is-open");
+		$a.removeClass("is-minimized").addClass("is-open");
+		aura.$askRestore.hide();
 		const $input = $a.find("input");
 		aura.render_jumps($input.val());
 		setTimeout(() => $input.trigger("focus").select(), 20);
 	};
 
+	aura.toggle_ask_dock = function () {
+		const docked = aura.$ask.toggleClass("is-docked").hasClass("is-docked");
+		aura.$ask.find('[data-aura-ask-action="dock"]')
+			.attr("aria-pressed", docked ? "true" : "false")
+			.attr("title", __(docked ? "Undock" : "Dock to right"))
+			.attr("aria-label", __(docked ? "Undock" : "Dock to right"));
+		aura.$ask.find(".aura-ask").attr("aria-modal", docked ? "false" : "true");
+	};
+
+	aura.minimize_ask = function () {
+		if (!aura.$ask) return;
+		aura.$ask.removeClass("is-open").addClass("is-minimized");
+		aura.$askRestore.show();
+	};
+
+	aura.restore_ask = function () {
+		if (!on(cfg().ai_bar)) return aura.close_ask();
+		aura.$ask.removeClass("is-minimized").addClass("is-open");
+		aura.$askRestore.hide();
+	};
+
 	aura.close_ask = function () {
-		aura.$ask && aura.$ask.removeClass("is-open");
+		if (aura.$ask) aura.$ask.removeClass("is-open is-minimized");
+		aura.$askRestore && aura.$askRestore.hide();
 	};
 
 	aura.render_jumps = function (q) {
@@ -291,7 +365,16 @@
 		if (!q) return;
 		const $body = $a.find(".aura-ask-body");
 		$body.find(".aura-answer-wrap").remove();
-		const $wrap = $(`<div class="aura-answer-wrap"><div class="aura-ask-label">✦ ${__("Answer")}</div></div>`).prependTo($body);
+		const $wrap = $(`
+			<div class="aura-answer-wrap">
+				<div class="aura-answer-head">
+					<div class="aura-ask-label">✦ ${__("Answer")}</div>
+					<button type="button" class="aura-ask-tool aura-answer-select" data-aura-select="output"
+						title="${__("Select all answer")}" aria-label="${__("Select all answer")}">
+						${svg(IC.select, 13)}<span>${__("Select all")}</span>
+					</button>
+				</div>
+			</div>`).prependTo($body);
 
 		if (!cfg().ai_ready) {
 			$wrap.append(

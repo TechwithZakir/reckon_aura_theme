@@ -25,6 +25,7 @@ POWERED_BY = "Powered by Frappe"
 OWNER = "Reckon Technologies Ltd."
 SKILLS_DIR = Path(__file__).resolve().parent / "skills"
 MAX_SKILL_CHARACTERS = 16000
+DEFAULT_DAILY_ASK_LIMIT = 10
 CONTACT = {
 	"website": "https://www.reckon.tech",
 	"website_label": "www.reckon.tech",
@@ -488,6 +489,26 @@ def _ask_system_prompt(s):
 	return "\n\n".join((custom_prompt or DEFAULT_PROMPT, SUPPORT_INSTRUCTIONS))
 
 
+def _consume_daily_ask_quota(s):
+	configured_limit = s.get("ask_ai_daily_limit")
+	limit = cint(configured_limit) if configured_limit is not None else DEFAULT_DAILY_ASK_LIMIT
+	if limit < 0:
+		frappe.throw(_("The daily Ask AI limit must be zero or greater."))
+	if limit == 0:
+		return
+
+	key = f"aura_ask_daily::{frappe.session.user}::{nowdate()}"
+	cache = _cache()
+	used = cache.incrby(key, 1)
+	cache.expire(key, 2 * 24 * 60 * 60)
+	if used > limit:
+		cache.incrby(key, -1)
+		frappe.throw(
+			_("You have reached the daily Ask AI limit of {0} questions. It resets tomorrow.").format(limit),
+			frappe.TooManyRequestsError,
+		)
+
+
 @frappe.whitelist(methods=["POST"])
 @rate_limit(limit=40, seconds=60 * 60)
 def ask(question, route=None):
@@ -499,6 +520,7 @@ def ask(question, route=None):
 	if not cint(s.enable_ai_bar):
 		frappe.throw(_("The AI assistant is turned off."))
 	_require_ai(s)
+	_consume_daily_ask_quota(s)
 
 	company, currency = _company_currency()
 	context = {

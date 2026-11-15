@@ -10,6 +10,7 @@ DEFAULTS = {
 	"aurora_background": 1,
 	"allow_user_override": 1,
 	"enable_ai_bar": 1,
+	"ask_ai_daily_limit": 10,
 	"enable_ai_brief": 1,
 	"enable_ai_fill": 1,
 	"ai_provider": "OpenAI Compatible",
@@ -44,12 +45,22 @@ def brand_stock_values():
 
 def after_migrate():
 	brand_stock_values()
+	ensure_daily_ask_limit()
 	# Only seed a site whose settings were never saved. Re-seeding on every migrate
 	# would bring back text an admin cleared on purpose (e.g. the login headline).
 	if not frappe.db.exists("DocType", SETTINGS):
 		return
 	if not frappe.db.sql("select 1 from `tabSingles` where doctype=%s limit 1", SETTINGS):
 		ensure_settings()
+
+
+def ensure_daily_ask_limit():
+	if not frappe.db.exists("DocType", SETTINGS):
+		return
+	value = frappe.db.get_single_value(SETTINGS, "ask_ai_daily_limit")
+	if value in (None, ""):
+		frappe.db.set_single_value(SETTINGS, "ask_ai_daily_limit", DEFAULTS["ask_ai_daily_limit"])
+		frappe.clear_cache()
 
 
 def ensure_settings():

@@ -1,7 +1,7 @@
 # Copyright (c) 2026, TechwithZakir and contributors
 # For license information, please see license.txt
 
-from unittest.mock import patch
+from unittest.mock import Mock, call, patch
 
 import frappe
 import requests
@@ -21,6 +21,13 @@ class TestAuraThemeSettings(IntegrationTestCase):
 		doc = frappe.get_single("Aura Theme Settings")
 		doc.accent = "Violet"
 		doc.glass_blur = 99
+		self.assertRaises(frappe.ValidationError, doc.validate)
+
+	def test_validate_daily_ask_limit_cannot_be_negative(self):
+		doc = frappe.get_single("Aura Theme Settings")
+		doc.accent = "Violet"
+		doc.glass_blur = 18
+		doc.ask_ai_daily_limit = -1
 		self.assertRaises(frappe.ValidationError, doc.validate)
 
 	def test_base_url_is_normalised(self):
@@ -70,6 +77,27 @@ class TestAuraThemeSettings(IntegrationTestCase):
 		set_single_value.assert_not_called()
 		clear_cache.assert_not_called()
 
+	def test_daily_ask_limit_migration_seeds_only_missing_value(self):
+		with (
+			patch.object(frappe.db, "exists", return_value=True),
+			patch.object(frappe.db, "get_single_value", return_value=None),
+			patch.object(frappe.db, "set_single_value") as set_single_value,
+			patch.object(frappe, "clear_cache") as clear_cache,
+		):
+			install.ensure_daily_ask_limit()
+		set_single_value.assert_called_once_with("Aura Theme Settings", "ask_ai_daily_limit", 10)
+		clear_cache.assert_called_once_with()
+
+		with (
+			patch.object(frappe.db, "exists", return_value=True),
+			patch.object(frappe.db, "get_single_value", return_value=0),
+			patch.object(frappe.db, "set_single_value") as set_single_value,
+			patch.object(frappe, "clear_cache") as clear_cache,
+		):
+			install.ensure_daily_ask_limit()
+		set_single_value.assert_not_called()
+		clear_cache.assert_not_called()
+
 
 class TestAuraApi(IntegrationTestCase):
 	def test_parse_json_strips_fences(self):
@@ -96,7 +124,7 @@ class TestAuraApi(IntegrationTestCase):
 		self.assertIn("Bangla script", prompt)
 
 	def test_ask_passes_accounts_guide_to_ai(self):
-		settings = frappe._dict(enable_ai_bar=1, ai_system_prompt="")
+		settings = frappe._dict(enable_ai_bar=1, ask_ai_daily_limit=0, ai_system_prompt="")
 		with (
 			patch.object(api, "_require_desk_user"),
 			patch.object(api, "_settings", return_value=settings),
@@ -114,6 +142,45 @@ class TestAuraApi(IntegrationTestCase):
 		self.assertIn("same language", system_prompt)
 		self.assertIn("<support_guide>", user_prompt)
 		self.assertIn("Bank Reconciliation", user_prompt)
+
+	def test_daily_ask_quota_is_atomic_and_per_user(self):
+		cache = Mock()
+		cache.incrby.return_value = 1
+		settings = frappe._dict(ask_ai_daily_limit=10)
+		with (
+			patch.object(api, "_cache", return_value=cache),
+			patch.object(api, "nowdate", return_value="2026-11-15"),
+			patch.object(api.frappe, "session", frappe._dict(user="quota@example.com")),
+		):
+			api._consume_daily_ask_quota(settings)
+
+		cache.incrby.assert_called_once_with("aura_ask_daily::quota@example.com::2026-11-15", 1)
+		cache.expire.assert_called_once_with("aura_ask_daily::quota@example.com::2026-11-15", 172800)
+
+	def test_daily_ask_quota_rejects_over_limit_and_zero_is_unlimited(self):
+		cache = Mock()
+		cache.incrby.return_value = 11
+		settings = frappe._dict(ask_ai_daily_limit=10)
+		with (
+			patch.object(api, "_cache", return_value=cache),
+			patch.object(api, "nowdate", return_value="2026-11-15"),
+			patch.object(api.frappe, "session", frappe._dict(user="quota@example.com")),
+			patch.object(api.frappe, "throw", side_effect=frappe.TooManyRequestsError),
+		):
+			self.assertRaises(frappe.TooManyRequestsError, api._consume_daily_ask_quota, settings)
+		self.assertEqual(
+			cache.incrby.call_args_list,
+			[
+				call("aura_ask_daily::quota@example.com::2026-11-15", 1),
+				call("aura_ask_daily::quota@example.com::2026-11-15", -1),
+			],
+		)
+
+		cache.incrby.return_value = 0
+		settings.ask_ai_daily_limit = 0
+		with patch.object(api, "_cache") as get_cache:
+			api._consume_daily_ask_quota(settings)
+		get_cache.assert_not_called()
 
 	def test_brief_runs_for_admin(self):
 		self.assertIsInstance(api._build_brief(), list)

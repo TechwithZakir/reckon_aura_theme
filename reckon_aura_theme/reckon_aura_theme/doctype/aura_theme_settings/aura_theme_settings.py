@@ -12,5 +12,7 @@ class AuraThemeSettings(Document):
 			frappe.throw(_("Pick a Custom Accent colour, or choose a preset accent."))
 		if self.glass_blur is not None and not (0 <= int(self.glass_blur) <= 40):
 			frappe.throw(_("Glass blur must be between 0 and 40 px."))
+		if self.ask_ai_daily_limit not in (None, "") and int(self.ask_ai_daily_limit) < 0:
+			frappe.throw(_("The daily Ask AI limit must be zero or greater."))
 		if self.ai_base_url:
 			self.ai_base_url = self.ai_base_url.strip().rstrip("/")
