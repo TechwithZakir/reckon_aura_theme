@@ -57,14 +57,14 @@
 		hero.innerHTML = `
 			<div class="aura-login-brand">${logo}<span>${brand}</span></div>
 			<div class="aura-login-copy">
-				<h1>${esc(c.headline || t("Your ERP, now with an AI that reads every ledger."))}</h1>
+				<h1>${esc(c.headline || t("ReckonERP, powered by Frappe."))}</h1>
 				${c.tagline ? `<p>${esc(c.tagline)}</p>` : ""}
 			</div>
 			<div class="aura-login-foot">
 				${contactList(c.contact)}
 				${c.footer ? `<p>${esc(c.footer)}</p>` : ""}
 				<p>&copy; ${new Date().getFullYear()} ${esc(c.owner || "Reckon Technologies Ltd.")}</p>
-				<p class="aura-login-powered">${esc(c.powered_by || t("Powered by ReckonERP"))}</p>
+				<p class="aura-login-powered">${esc(c.powered_by || t("Powered by Frappe"))}</p>
 			</div>`;
 		document.body.prepend(hero);
 		document.body.classList.add("aura-login");

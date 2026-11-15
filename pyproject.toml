@@ -3,7 +3,7 @@ name = "reckon_aura_theme"
 authors = [
     { name = "TechwithZakir", email = "admin@example.com" }
 ]
-description = "Aurora Glass — an AI-first desk theme for Frappe / ERPNext v16"
+description = "ReckonERP theme for Frappe / ERPNext v16"
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]

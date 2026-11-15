@@ -1,4 +1,4 @@
-"""Server side of Reckon Aura Theme: public config, the workspace brief,
+"""Server side of the ReckonERP theme: public config, the workspace brief,
 the Ask-AI command bar and Fill-with-AI document extraction.
 
 Every data read goes through frappe.get_list, so users only ever see
@@ -7,6 +7,7 @@ Every data read goes through frappe.get_list, so users only ever see
 
 import json
 import re
+from pathlib import Path
 
 import frappe
 import requests
@@ -20,8 +21,10 @@ SETTINGS = "Aura Theme Settings"
 # (the framework's own) are replaced by these; a name an admin chose is kept.
 BRAND_NAME = "ReckonERP"
 BRAND_LOGO = "/assets/reckon_aura_theme/images/reckonerp-logo.webp"
-POWERED_BY = "Powered by ReckonERP"
+POWERED_BY = "Powered by Frappe"
 OWNER = "Reckon Technologies Ltd."
+SKILLS_DIR = Path(__file__).resolve().parent / "skills"
+MAX_SKILL_CHARACTERS = 16000
 CONTACT = {
 	"website": "https://www.reckon.tech",
 	"website_label": "www.reckon.tech",
@@ -46,10 +49,21 @@ PARTY_FIELDS = {
 }
 
 DEFAULT_PROMPT = (
-	"You are the assistant inside an ERP desk. Answer briefly and concretely, "
-	"using only the facts in the provided context. If the context does not contain the answer, "
-	"say so and suggest where in the ERP the user can find it (DocType or report name). "
+	"You are the ReckonERP support assistant, powered by Frappe. Answer clearly and concretely "
+	"using the supplied support guide and facts. If they do not contain the answer, say so and "
+	"suggest where in the ERP the user can find it (page, DocType, or report name). "
 	"Use the company currency. Prefer short bullet points. Never invent figures."
+)
+
+SUPPORT_INSTRUCTIONS = (
+	"Use the relevant attached support guide for procedural questions and briefly name its source "
+	"page(s); do not invent references. Reply in the same language as the user's question. "
+	"If the user writes in Bangla, answer in "
+	"Bangla script; keep ERPNext menu labels and field names in English when useful, and explain "
+	"them in the user's language. For standard ERPNext behavior, the official ERPNext guide is "
+	"authoritative. Reckon Accounts notes are product-specific context, not a replacement for "
+	"ERPNext accounting. Do not assume a custom app or feature is installed; say when availability "
+	"depends on the site's version, configuration, or permissions. Do not claim to perform actions."
 )
 
 EXTRACT_PROMPT = (
@@ -58,6 +72,35 @@ EXTRACT_PROMPT = (
 	'{{"party": "<{party_type} name or null>", "due_date": "YYYY-MM-DD or null", '
 	'"delivery_date": "YYYY-MM-DD or null", "items": [{{"item": "<item code or name>", '
 	'"qty": <number>, "rate": <number or null>}}]}}'
+)
+
+ACCOUNTS_SKILL_MARKERS = (
+	"accounts",
+	"accounting",
+	"chart of accounts",
+	"sales invoice",
+	"payment entry",
+	"payment reconciliation",
+	"bank reconciliation",
+	"general ledger",
+	"trial balance",
+	"balance sheet",
+	"profit and loss",
+	"cash flow",
+	"accounts receivable",
+	"accounts payable",
+	"financial report",
+	"party ledger",
+	"account ledger",
+	"reckon accounts",
+	"হিসাব",
+	"চালান",
+	"পেমেন্ট",
+	"ব্যাংক",
+	"খতিয়ান",
+	"লেজার",
+	"ব্যালেন্স শিট",
+	"আর্থিক প্রতিবেদন",
 )
 
 
@@ -416,6 +459,35 @@ def _ask_records():
 	return records
 
 
+def _needs_accounts_skill(question, route):
+	text = f"{route or ''}\n{question or ''}".casefold()
+	return any(marker in text for marker in ACCOUNTS_SKILL_MARKERS)
+
+
+def _get_accounts_skill(question, route):
+	if not _needs_accounts_skill(question, route):
+		return None
+
+	path = SKILLS_DIR / "accounts_skills.md"
+	try:
+		content = path.read_text(encoding="utf-8")
+	except OSError as e:
+		frappe.log_error(f"Could not read {path}: {e}", "Aura AI skill unavailable")
+		frappe.throw(_("The Accounts support guide is unavailable. Please contact your administrator."))
+	if len(content) > MAX_SKILL_CHARACTERS:
+		frappe.log_error(
+			f"{path} contains {len(content)} characters; maximum is {MAX_SKILL_CHARACTERS}.",
+			"Aura AI skill too large",
+		)
+		frappe.throw(_("The Accounts support guide exceeds its supported size. Please contact your administrator."))
+	return content
+
+
+def _ask_system_prompt(s):
+	custom_prompt = (s.ai_system_prompt or "").strip()
+	return "\n\n".join((custom_prompt or DEFAULT_PROMPT, SUPPORT_INSTRUCTIONS))
+
+
 @frappe.whitelist(methods=["POST"])
 @rate_limit(limit=40, seconds=60 * 60)
 def ask(question, route=None):
@@ -438,10 +510,19 @@ def ask(question, route=None):
 		"facts": [i["text"] for i in _build_brief()],
 		"records": _ask_records(),
 	}
+	skill = _get_accounts_skill(question, route)
+	skill_context = (
+		"\n\nRelevant Accounts support guide:\n"
+		"<support_guide>\n"
+		f"{skill}\n"
+		"</support_guide>"
+		if skill
+		else ""
+	)
 	answer = _complete(
 		s,
-		s.ai_system_prompt or DEFAULT_PROMPT,
-		f"Context (JSON):\n{json.dumps(context, default=str)}\n\nQuestion: {question}",
+		_ask_system_prompt(s),
+		f"Context (JSON):\n{json.dumps(context, default=str)}{skill_context}\n\nQuestion: {question}",
 	)
 	return {"answer": answer.strip()}
 

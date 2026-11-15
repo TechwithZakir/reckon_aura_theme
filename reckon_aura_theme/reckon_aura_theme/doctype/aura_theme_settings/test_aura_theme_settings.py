@@ -39,6 +39,37 @@ class TestAuraThemeSettings(IntegrationTestCase):
 		install.after_migrate()
 		self.assertFalse(frappe.db.get_single_value("Aura Theme Settings", "login_headline"))
 
+	def test_brand_migration_updates_stock_login_headline(self):
+		with (
+			patch.object(frappe.db, "exists", return_value=True),
+			patch.object(
+				frappe.db,
+				"get_single_value",
+				side_effect=["Frappe", install.OLD_LOGIN_HEADLINE],
+			),
+			patch.object(frappe.db, "set_single_value") as set_single_value,
+			patch.object(frappe, "clear_cache") as clear_cache,
+		):
+			install.brand_stock_values()
+
+		set_single_value.assert_any_call("Aura Theme Settings", "brand_name", "ReckonERP")
+		set_single_value.assert_any_call(
+			"Aura Theme Settings", "login_headline", install.DEFAULTS["login_headline"]
+		)
+		clear_cache.assert_called_once_with()
+
+	def test_brand_migration_preserves_custom_login_headline(self):
+		with (
+			patch.object(frappe.db, "exists", return_value=True),
+			patch.object(frappe.db, "get_single_value", side_effect=["ReckonERP", "My company message"]),
+			patch.object(frappe.db, "set_single_value") as set_single_value,
+			patch.object(frappe, "clear_cache") as clear_cache,
+		):
+			install.brand_stock_values()
+
+		set_single_value.assert_not_called()
+		clear_cache.assert_not_called()
+
 
 class TestAuraApi(IntegrationTestCase):
 	def test_parse_json_strips_fences(self):
@@ -50,6 +81,39 @@ class TestAuraApi(IntegrationTestCase):
 
 	def test_like_escapes_wildcards(self):
 		self.assertEqual(api._like("50%_off"), "%50\\%\\_off%")
+
+	def test_accounts_skill_matches_routes_and_bangla_questions(self):
+		self.assertTrue(api._needs_accounts_skill("", "Workspaces/Accounts"))
+		self.assertTrue(api._needs_accounts_skill("ব্যাংক মিলাব কীভাবে?", ""))
+		self.assertFalse(api._needs_accounts_skill("How do I change my password?", "User Profile"))
+		self.assertIn("Bank Reconciliation", api._get_accounts_skill("", "query-report/General Ledger"))
+
+	def test_ask_system_prompt_preserves_admin_prompt_and_language_rules(self):
+		s = frappe._dict(ai_system_prompt="Use concise bullet points.")
+		prompt = api._ask_system_prompt(s)
+		self.assertIn("Use concise bullet points.", prompt)
+		self.assertIn("same language", prompt)
+		self.assertIn("Bangla script", prompt)
+
+	def test_ask_passes_accounts_guide_to_ai(self):
+		settings = frappe._dict(enable_ai_bar=1, ai_system_prompt="")
+		with (
+			patch.object(api, "_require_desk_user"),
+			patch.object(api, "_settings", return_value=settings),
+			patch.object(api, "_require_ai"),
+			patch.object(api, "_company_currency", return_value=("Example Co", "USD")),
+			patch.object(api, "_build_brief", return_value=[]),
+			patch.object(api, "_ask_records", return_value={}),
+			patch.object(frappe.utils, "get_fullname", return_value="Test User"),
+			patch.object(api, "_complete", return_value="Check the statement lines.") as complete,
+		):
+			result = api.ask("How do I reconcile a bank statement?", "Workspaces/Accounts")
+
+		self.assertEqual(result["answer"], "Check the statement lines.")
+		system_prompt, user_prompt = complete.call_args.args[1:]
+		self.assertIn("same language", system_prompt)
+		self.assertIn("<support_guide>", user_prompt)
+		self.assertIn("Bank Reconciliation", user_prompt)
 
 	def test_brief_runs_for_admin(self):
 		self.assertIsInstance(api._build_brief(), list)

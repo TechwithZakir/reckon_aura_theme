@@ -13,9 +13,11 @@ DEFAULTS = {
 	"enable_ai_brief": 1,
 	"enable_ai_fill": 1,
 	"ai_provider": "OpenAI Compatible",
-	"login_headline": "Your ERP, now with an AI that reads every ledger.",
+	"login_headline": "ReckonERP, powered by Frappe.",
 	"login_tagline": "Invoices, orders, stock and people — one calm, glass-clear workspace.",
 }
+
+OLD_LOGIN_HEADLINE = "Your ERP, now with an AI that reads every ledger."
 
 
 def after_install():
@@ -30,8 +32,13 @@ def brand_stock_values():
 		return
 	current = frappe.db.get_single_value(SETTINGS, "brand_name") or ""
 	wanted = resolve_brand_name(current)
+	current_headline = frappe.db.get_single_value(SETTINGS, "login_headline") or ""
+	headline_changed = current_headline == OLD_LOGIN_HEADLINE
 	if wanted != current:
 		frappe.db.set_single_value(SETTINGS, "brand_name", BRAND_NAME)
+	if headline_changed:
+		frappe.db.set_single_value(SETTINGS, "login_headline", DEFAULTS["login_headline"])
+	if wanted != current or headline_changed:
 		frappe.clear_cache()
 
 
