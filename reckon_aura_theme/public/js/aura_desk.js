@@ -205,8 +205,8 @@
 								"New chat"
 							)}" aria-label="${__("New chat")}">${svg(IC.newChat, 15)}</button>
 							<button type="button" class="aura-ask-tool" data-aura-ask-action="dock" aria-pressed="false" title="${__(
-								"Dock to left"
-							)}" aria-label="${__("Dock to left")}">${svg(IC.dock, 15)}</button>
+								"Dock to right"
+							)}" aria-label="${__("Dock to right")}">${svg(IC.dock, 15)}</button>
 							<button type="button" class="aura-ask-tool" data-aura-ask-action="close" title="${__(
 								"Close"
 							)}" aria-label="${__("Close")}">${svg(IC.x, 15)}</button>
@@ -395,8 +395,8 @@
 		const docked = aura.$ask.toggleClass("is-docked").hasClass("is-docked");
 		aura.$ask.find('[data-aura-ask-action="dock"]')
 			.attr("aria-pressed", docked ? "true" : "false")
-			.attr("title", __(docked ? "Undock" : "Dock to left"))
-			.attr("aria-label", __(docked ? "Undock" : "Dock to left"));
+			.attr("title", __(docked ? "Undock" : "Dock to right"))
+			.attr("aria-label", __(docked ? "Undock" : "Dock to right"));
 		aura.sync_ask_dock_layout();
 	};
 

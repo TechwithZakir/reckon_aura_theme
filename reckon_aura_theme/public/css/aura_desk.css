@@ -661,8 +661,8 @@ input[type="checkbox"]:focus-visible { box-shadow: 0 0 0 3px var(--aura-accent-s
 body.aura-ask-page-reflow {
 	width: 100%;
 	box-sizing: border-box;
-	padding-left: var(--aura-ask-dock-width);
-	transition: padding-left 0.18s ease;
+	padding-right: var(--aura-ask-dock-width);
+	transition: padding-right 0.18s ease;
 }
 .aura-ask-backdrop {
 	position: fixed;
@@ -679,7 +679,7 @@ body.aura-ask-page-reflow {
 .aura-ask-backdrop.is-open { display: flex; animation: aura-fade 0.16s ease-out; }
 .aura-ask-backdrop.is-docked {
 	align-items: stretch;
-	justify-content: flex-start;
+	justify-content: flex-end;
 	padding: 0;
 	background: transparent;
 	backdrop-filter: none;
@@ -711,7 +711,7 @@ body.aura-ask-page-reflow {
 	max-height: 100vh;
 	max-height: 100dvh;
 	min-height: 0;
-	border-radius: 0 20px 20px 0;
+	border-radius: 20px 0 0 20px;
 	pointer-events: auto;
 	animation: none;
 }
@@ -1010,7 +1010,7 @@ body.aura-ask-page-reflow {
 		width: var(--aura-ask-dock-width);
 		max-width: var(--aura-ask-dock-width);
 		max-height: 100dvh;
-		border-radius: 0 16px 16px 0;
+		border-radius: 16px 0 0 16px;
 	}
 	.aura-ask-brand small { display: none; }
 	.aura-ask-header { padding: 8px; }

@@ -11,7 +11,7 @@ Frosted-glass surfaces over a violet → cyan aurora, Sora headings over Geist, 
 | Modes | Follows Frappe's own light / dark (`data-theme`) and persists the toggle on the User via `switch_theme` |
 | Accents | Violet, Cyan, Ember or a Custom pair — site default plus optional per-browser override from the navbar |
 | Density | Comfortable / Compact, site default + per-browser toggle |
-| Ask AI | `Ctrl/⌘ + J` ChatGPT-style multi-turn assistant with a left dock that reflows the Desk, bottom composer, voice dictation, and selectable messages. Answers in the user's language using the Accounts support guide, brief facts, and permitted finance records |
+| Ask AI | `Ctrl/⌘ + J` ChatGPT-style multi-turn assistant with a right dock that reflows the Desk into a split panel, bottom composer, voice dictation, and selectable messages. Answers in the user's language using the Accounts support guide, brief facts, and permitted finance records |
 | Brief | A "Today's brief" card on workspaces: overdue receivables, month-to-date billing vs last month, draft invoices, supplier bills due in 7 days (optionally summarised by AI). Dismissible per session |
 | Fill with AI | On Sales Invoice / Order, Quotation, Delivery Note, Purchase Order / Invoice / Receipt drafts: paste a PO or email, AI extracts party + items + qty + rate and matches them to your masters. Nothing is saved automatically |
 | Login | Aurora login with a brand hero (headline / tagline / footer from settings). Only auth pages are styled — your website keeps its Website Theme |
