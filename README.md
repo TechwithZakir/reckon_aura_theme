@@ -11,7 +11,7 @@ Frosted-glass surfaces over a violet → cyan aurora, Sora headings over Geist, 
 | Modes | Follows Frappe's own light / dark (`data-theme`) and persists the toggle on the User via `switch_theme` |
 | Accents | Violet, Cyan, Ember or a Custom pair — site default plus optional per-browser override from the navbar |
 | Density | Comfortable / Compact, site default + per-browser toggle |
-| Ask AI | `Ctrl/⌘ + J` ChatGPT-style multi-turn assistant with a right dock that reflows the Desk into a split panel, bottom composer, voice dictation, and selectable messages. Answers in the user's language using the Accounts support guide, brief facts, and permitted finance records |
+| Ask AI | `Ctrl/⌘ + J` ChatGPT-style multi-turn assistant with a right dock that reflows the Desk into a split panel, bottom composer, voice dictation, and selectable messages. Answers in the user's language using module-specific support guides, brief facts, and permitted finance records |
 | Brief | A "Today's brief" card on workspaces: overdue receivables, month-to-date billing vs last month, draft invoices, supplier bills due in 7 days (optionally summarised by AI). Dismissible per session |
 | Fill with AI | On Sales Invoice / Order, Quotation, Delivery Note, Purchase Order / Invoice / Receipt drafts: paste a PO or email, AI extracts party + items + qty + rate and matches them to your masters. Nothing is saved automatically |
 | Login | Aurora login with a brand hero (headline / tagline / footer from settings). Only auth pages are styled — your website keeps its Website Theme |
@@ -44,9 +44,9 @@ The theme works fully without AI — the brief is computed from your data, and t
 3. Base URL (optional), Model, API Key
 4. Click **Test AI connection**
 
-Privacy: live ERP records reaching the model are read with `frappe.get_list`, so they are limited to what the current user may read. The Accounts guide is static app documentation. The API key is stored in a Password field and never sent to the browser. Requests are rate-limited per user (`ask` 40/h, `extract_document` 60/h), and the AI endpoints are limited to desk (System) users — portal users cannot call them.
+Privacy: live ERP records reaching the model are read with `frappe.get_list`, so they are limited to what the current user may read. Support guides are static app documentation. The API key is stored in a Password field and never sent to the browser. Requests are rate-limited per user (`ask` 40/h, `extract_document` 60/h), and the AI endpoints are limited to desk (System) users — portal users cannot call them.
 
-Ask AI uses the official ERPNext accounting documentation as the authority for standard behavior. Reckon Accounts notes clarify its custom reports; they do not imply that the add-on is installed on every site. Replies follow the user's language, including Bangla. This first support-guide milestone is advisory only.
+Ask AI selects a support guide from the current Desk route and question. Official Frappe/ERPNext documentation is authoritative for standard behavior; Reckon Accounts notes clarify its custom reports and do not imply that the add-on is installed on every site. Frappe HR and Frappe CRM guides identify those products as separate apps whose availability must be checked. The custom-module guide asks for the app name and documentation rather than inventing custom behavior. Replies follow the user's language, including Bangla. Support guides are advisory only.
 
 **Ask AI quota:** Aura Theme Settings can set a daily Ask AI limit per Desk user (default 10). Set it to `0` to disable the daily cap; the existing hourly rate limit remains. Disabling **Enable Ask AI** hides its launcher and panel and rejects server requests. Conversation history remains in memory in the current Desk page and is limited to the latest six turns sent for context. Voice dictation uses the browser's built-in speech recognition and requires microphone permission.
 
@@ -58,7 +58,7 @@ reckon_aura_theme/
 ├─ boot.py                      frappe.boot.aura (public config only)
 ├─ install.py                   seeds settings defaults
 ├─ api.py                       get_brief · ask · extract_document · test_connection · get_login_config
-├─ skills/accounts_skills.md    Accounts workflows and report-selection guidance with source links
+├─ skills/                       route-selected module support guides with source links
 ├─ reckon_aura_theme/doctype/aura_theme_settings/   Single DocType
 └─ public/
    ├─ css/aura_desk.css         tokens + desk skin + Aura UI

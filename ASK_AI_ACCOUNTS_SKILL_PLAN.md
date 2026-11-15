@@ -1,6 +1,6 @@
-# Ask AI Accounts Skill — First Milestone
+# Ask AI ERP Support Skills Plan
 
-Status: implementation complete; Frappe integration suite pending an environment with Frappe/bench.
+Status: Accounts milestone shipped; the approved module-guide expansion is implemented locally. Frappe integration tests and a product-specific custom-app guide remain pending.
 
 ## Agreed decisions
 
@@ -59,3 +59,37 @@ Status: implementation complete; Frappe integration suite pending an environment
 - [ERPNext Accounting Reports](https://docs.frappe.io/erpnext/accounting-reports)
 - [Reckon Accounts README](https://github.com/TechwithZakir/Reckon-Accounts/blob/main/README.md)
 - [Reckon Accounts report catalog](https://github.com/TechwithZakir/Reckon-Accounts/blob/main/REPORT_CATALOG.md)
+
+## Approved module expansion
+
+The user approved support guides for Selling/Sales, Buying/Procurement,
+Stock/Inventory, HR/Payroll, Manufacturing, CRM/Projects, and custom modules.
+Each guide lives in its own `skills/{module}_skills.md` file and is selected
+from the current Desk route and question. When a question clearly spans two
+areas, attach at most two relevant guides.
+
+- Use official ERPNext documentation for standard ERPNext behavior.
+- Identify Frappe HR and Frappe CRM as separate apps; do not imply either is
+  installed on every site.
+- The generic custom-module guide must ask for the exact app/page and sources
+  rather than inventing custom workflows. A product-specific custom guide
+  needs the app name and authoritative documentation.
+- Preserve language matching, permission boundaries, configuration caveats,
+  and advisory-only behavior for every guide.
+
+The current implementation has separate guides for Selling, Buying, Stock,
+HR, Manufacturing, CRM/Projects, and safe custom-module discovery. The exact
+custom app name and its documentation are still needed before adding
+product-specific custom behavior.
+
+## Expansion acceptance criteria
+
+- Each approved module has a source-linked guide with setup, normal workflow,
+  common troubleshooting steps, and configuration/permission caveats.
+- Route matching selects the page's module; question matching covers common
+  English and Bangla terms without attaching unrelated guides.
+- No more than two guides are included per Ask AI request.
+- Missing, unreadable, or oversized guides fail explicitly rather than
+  silently falling back to an ungrounded answer.
+- Tests cover module routing, Bangla intent, two-guide selection, and unrelated
+  question fallback.

@@ -110,11 +110,36 @@ class TestAuraApi(IntegrationTestCase):
 	def test_like_escapes_wildcards(self):
 		self.assertEqual(api._like("50%_off"), "%50\\%\\_off%")
 
-	def test_accounts_skill_matches_routes_and_bangla_questions(self):
-		self.assertTrue(api._needs_accounts_skill("", "Workspaces/Accounts"))
-		self.assertTrue(api._needs_accounts_skill("ব্যাংক মিলাব কীভাবে?", ""))
-		self.assertFalse(api._needs_accounts_skill("How do I change my password?", "User Profile"))
-		self.assertIn("Bank Reconciliation", api._get_accounts_skill("", "query-report/General Ledger"))
+	def test_skill_guides_match_routes_and_questions(self):
+		cases = (
+			("", "Workspaces/Accounts", "accounts"),
+			("ব্যাংক মিলাব কীভাবে?", "", "accounts"),
+			("How do I set up a chart of account?", "", "accounts"),
+			("How do I create a sales order?", "", "selling"),
+			("", "Buying/Purchase Order", "buying"),
+			("How do I transfer stock between warehouses?", "", "stock"),
+			("", "Human Resources/Leave Application", "hr"),
+			("How do I create a bill of materials?", "", "manufacturing"),
+			("", "Projects/Project", "crm_projects"),
+			("How does our custom module work?", "", "custom_module"),
+		)
+		for question, route, expected in cases:
+			with self.subTest(question=question, route=route):
+				selected = [guide["id"] for guide in api._select_skill_guides(question, route)]
+				self.assertIn(expected, selected)
+
+		self.assertEqual(api._select_skill_guides("How do I change my password?", "User Profile"), [])
+		guide, content = api._get_support_skills("", "query-report/General Ledger")[0]
+		self.assertEqual(guide["id"], "accounts")
+		self.assertIn("Bank Reconciliation", content)
+
+	def test_skill_guides_include_related_modules_and_are_bounded(self):
+		skills = api._get_support_skills("How do I create a quotation and receive stock?", "")
+		self.assertEqual([guide["id"] for guide, _ in skills], ["selling", "stock"])
+		for guide in api.SKILL_GUIDES:
+			with self.subTest(guide=guide["id"]):
+				content = (api.SKILLS_DIR / guide["file"]).read_text(encoding="utf-8")
+				self.assertLessEqual(len(content), api.MAX_SKILL_CHARACTERS)
 
 	def test_ask_system_prompt_preserves_admin_prompt_and_language_rules(self):
 		s = frappe._dict(ai_system_prompt="Use concise bullet points.")
@@ -123,7 +148,7 @@ class TestAuraApi(IntegrationTestCase):
 		self.assertIn("same language", prompt)
 		self.assertIn("Bangla script", prompt)
 
-	def test_ask_passes_accounts_guide_to_ai(self):
+	def test_ask_passes_selected_skill_guide_to_ai(self):
 		settings = frappe._dict(enable_ai_bar=1, ask_ai_daily_limit=0, ai_system_prompt="")
 		with (
 			patch.object(api, "_require_desk_user"),
@@ -147,7 +172,7 @@ class TestAuraApi(IntegrationTestCase):
 		self.assertEqual(result["answer"], "Check the statement lines.")
 		system_prompt, user_prompt = complete.call_args.args[1:]
 		self.assertIn("same language", system_prompt)
-		self.assertIn("<support_guide>", user_prompt)
+		self.assertIn('<support_guide module="accounts">', user_prompt)
 		self.assertIn("Bank Reconciliation", user_prompt)
 		self.assertIn("Where can I see overdue invoices?", user_prompt)
 
