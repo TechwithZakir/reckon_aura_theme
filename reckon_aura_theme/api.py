@@ -5,6 +5,9 @@ Every data read goes through frappe.get_list, so users only ever see
 (and the AI only ever receives) records they are already permitted to read.
 """
 
+import base64
+import binascii
+import io
 import json
 import re
 from pathlib import Path
@@ -26,6 +29,7 @@ OWNER = "Reckon Technologies Ltd."
 SKILLS_DIR = Path(__file__).resolve().parent / "skills"
 MAX_SKILL_CHARACTERS = 16000
 DEFAULT_DAILY_ASK_LIMIT = 10
+MAX_FILL_FILE_BYTES = 5 * 1024 * 1024
 MAX_ASK_HISTORY_MESSAGES = 12
 MAX_ASK_HISTORY_MESSAGE_LENGTH = 2000
 CONTACT = {
@@ -70,7 +74,7 @@ SUPPORT_INSTRUCTIONS = (
 )
 
 EXTRACT_PROMPT = (
-	"Extract a {party_type} transaction from the user's text (a purchase order, email or notes). "
+	"Extract a {party_type} transaction from the user's text, or from the attached photo or document (a purchase order, bill, email or notes). "
 	"Reply with ONLY a JSON object, no prose, shaped exactly like: "
 	'{{"party": "<{party_type} name or null>", "due_date": "YYYY-MM-DD or null", '
 	'"delivery_date": "YYYY-MM-DD or null", "items": [{{"item": "<item code or name>", '
@@ -595,7 +599,7 @@ def _post(url, headers, payload):
 	return r.json()
 
 
-def _complete(s, system, user, max_tokens=700, quiet=False):
+def _complete(s, system, user, max_tokens=700, quiet=False, attachments=None):
 	"""Call the configured provider. Errors are logged; with quiet=True they raise
 	AuraAIError (no message reaches the user), otherwise a user-facing frappe.throw."""
 	key = _api_key(s)
@@ -610,7 +614,7 @@ def _complete(s, system, user, max_tokens=700, quiet=False):
 					"model": s.ai_model,
 					"max_tokens": max_tokens,
 					"system": system,
-					"messages": [{"role": "user", "content": user}],
+					"messages": [{"role": "user", "content": _anthropic_content(user, attachments)}],
 				},
 			)
 			return "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
@@ -623,7 +627,7 @@ def _complete(s, system, user, max_tokens=700, quiet=False):
 				"model": s.ai_model,
 				"max_tokens": max_tokens,
 				"temperature": 0.2,
-				"messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+				"messages": [{"role": "system", "content": system}, {"role": "user", "content": _openai_content(user, attachments)}],
 			},
 		)
 		return data["choices"][0]["message"]["content"] or ""
@@ -641,6 +645,26 @@ def _complete(s, system, user, max_tokens=700, quiet=False):
 	if quiet:
 		raise AuraAIError(message)
 	frappe.throw(message)
+
+
+def _anthropic_content(text, attachments):
+	if not attachments:
+		return text
+	blocks = []
+	for a in attachments:
+		kind = "document" if a["media_type"] == "application/pdf" else "image"
+		blocks.append({"type": kind, "source": {"type": "base64", "media_type": a["media_type"], "data": a["data"]}})
+	return [*blocks, {"type": "text", "text": text}]
+
+
+def _openai_content(text, attachments):
+	images = [a for a in (attachments or []) if a["media_type"] != "application/pdf"]
+	if not images:
+		return text
+	parts = [{"type": "text", "text": text}]
+	for a in images:
+		parts.append({"type": "image_url", "image_url": {"url": f"data:{a['media_type']};base64,{a['data']}"}})
+	return parts
 
 
 def _ask_records():
@@ -877,9 +901,101 @@ def _match_item(text, party_type):
 	return hit[0] if hit else None
 
 
+def _fill_policy():
+	"""Per-plan switch and daily limit from the SaaS platform; no restriction where that app is not installed."""
+	try:
+		if "reckon_saas_platform" in frappe.get_installed_apps():
+			return frappe.get_attr("reckon_saas_platform.plan_limits.ai_fill_policy")(frappe.session.user)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Aura Fill with AI plan policy")
+	return {"enabled": True, "daily_limit": None}
+
+
+def _fill_key():
+	return f"aura_fill_daily::{frappe.session.user}::{nowdate()}"
+
+
+def _fill_used():
+	return cint(_cache().get(_fill_key()) or 0)  # the counter is a raw Redis integer, like the Ask AI one
+
+
+def _take_fill_use(limit):
+	"""Count a use now; the caller gives it back if the AI call fails."""
+	cache = _cache()
+	used = cache.incrby(_fill_key(), 1)
+	cache.expire(_fill_key(), 2 * 24 * 60 * 60)
+	if limit and used > limit:
+		cache.incrby(_fill_key(), -1)
+		frappe.throw(
+			_("You have reached your daily Fill with AI limit of {0}. It resets tomorrow.").format(limit),
+			frappe.TooManyRequestsError,
+		)
+
+
+def _give_back_fill_use():
+	_cache().incrby(_fill_key(), -1)
+
+
+@frappe.whitelist()
+def fill_policy():
+	"""What the current user may do with Fill with AI: shown or hidden, uses left today."""
+	_require_desk_user()
+	s = _settings()
+	policy = _fill_policy()
+	limit = policy.get("daily_limit")
+	return {
+		"enabled": bool(cint(s.enable_ai_fill) and _ai_ready(s) and policy.get("enabled")),
+		"plan_blocked": bool(not policy.get("enabled")),
+		"daily_limit": limit,
+		"left": max(limit - _fill_used(), 0) if limit else None,
+		"max_file_mb": MAX_FILL_FILE_BYTES // (1024 * 1024),
+	}
+
+
+def _sniff(raw):
+	if raw[:3] == b"\xff\xd8\xff":
+		return "image/jpeg"
+	if raw[:8] == b"\x89PNG\r\n\x1a\n":
+		return "image/png"
+	if raw[:4] == b"RIFF" and raw[8:12] == b"WEBP":
+		return "image/webp"
+	if raw[:4] == b"GIF8":
+		return "image/gif"
+	if raw[:5] == b"%PDF-":
+		return "application/pdf"
+	return None
+
+
+def _read_attachment(file_data):
+	"""A photo or PDF sent as base64: checked by its real bytes, not by the name or type the browser claims."""
+	data = str(file_data or "")
+	if data.startswith("data:") and "," in data:
+		data = data.split(",", 1)[1]
+	try:
+		raw = base64.b64decode(data, validate=True)
+	except (binascii.Error, ValueError):
+		frappe.throw(_("The file could not be read. Upload a photo or a PDF."))
+	if not raw or len(raw) > MAX_FILL_FILE_BYTES:
+		frappe.throw(_("The file is too large. The limit is {0} MB.").format(MAX_FILL_FILE_BYTES // (1024 * 1024)))
+	media_type = _sniff(raw)
+	if not media_type:
+		frappe.throw(_("Upload a photo (JPG, PNG, WebP) or a PDF."))
+	return {"media_type": media_type, "data": base64.b64encode(raw).decode("ascii"), "raw": raw}
+
+
+def _pdf_text(raw):
+	try:
+		from pypdf import PdfReader
+
+		reader = PdfReader(io.BytesIO(raw))
+		return "\n".join((page.extract_text() or "") for page in reader.pages[:10]).strip()
+	except Exception:
+		return ""
+
+
 @frappe.whitelist(methods=["POST"])
 @rate_limit(limit=60, seconds=60 * 60)
-def extract_document(doctype, text):
+def extract_document(doctype, text=None, file_data=None):
 	_require_desk_user()
 	if doctype not in PARTY_FIELDS:
 		frappe.throw(_("Fill with AI is not available for {0}.").format(doctype))
@@ -887,12 +1003,41 @@ def extract_document(doctype, text):
 	s = _settings()
 	if not cint(s.enable_ai_fill):
 		frappe.throw(_("Fill with AI is turned off."))
+	policy = _fill_policy()
+	if not policy.get("enabled"):
+		frappe.throw(_("Fill with AI is not included in your plan."), frappe.PermissionError)
 	_require_ai(s)
+	text = (text or "").strip()
+	if not text and not file_data:
+		frappe.throw(_("Paste some text, speak, or upload a photo or PDF first."))
 
-	party_type, _field = PARTY_FIELDS[doctype]
-	data = _parse_json(
-		_complete(s, EXTRACT_PROMPT.format(party_type=party_type), (text or "")[:12000], max_tokens=1500)
-	)
+	attachments = []
+	if file_data:
+		attachment = _read_attachment(file_data)
+		if attachment["media_type"] == "application/pdf" and (s.ai_provider or "OpenAI Compatible") != "Anthropic":
+			# Not every provider reads PDFs: use the text inside it, and ask for a photo when it is a scan.
+			pdf_text = _pdf_text(attachment["raw"])
+			if len(pdf_text) < 20:
+				frappe.throw(_("This PDF is a scan. Upload it as a photo (JPG or PNG) instead."))
+			text = (text + "\n\n" + pdf_text).strip()
+		else:
+			attachments.append(attachment)
+
+	_take_fill_use(policy.get("daily_limit"))
+	try:
+		party_type, _field = PARTY_FIELDS[doctype]
+		data = _parse_json(
+			_complete(
+				s,
+				EXTRACT_PROMPT.format(party_type=party_type),
+				text[:12000] or "Read the attached document.",
+				max_tokens=1500,
+				attachments=attachments,
+			)
+		)
+	except Exception:
+		_give_back_fill_use()
+		raise
 
 	rows = data.get("items")
 	items, unmatched = [], []

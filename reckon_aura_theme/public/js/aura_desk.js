@@ -639,11 +639,53 @@
 		const c = cfg();
 		if (c.enabled === 0 || !on(c.ai_fill) || !c.ai_ready || frm.doc.docstatus !== 0) return;
 		if (!frappe.model.can_create(frm.doctype)) return;
-		const $btn = frm.add_custom_button("✦ " + __("Fill with AI"), () => aura.fill_dialog(frm));
-		$btn && $btn.addClass && $btn.addClass("aura-fill-btn");
+		aura.fill_policy().then((policy) => {
+			if (!policy.enabled || frm.doc.docstatus !== 0) return;
+			const $btn = frm.add_custom_button("✦ " + __("Fill with AI"), () => aura.fill_dialog(frm, policy));
+			$btn && $btn.addClass && $btn.addClass("aura-fill-btn");
+		}).catch(() => {});  // not allowed or not set up: no button
 	};
 
-	aura.fill_dialog = function (frm) {
+	// Asked once per page load: the plan's switch and how many uses are left today.
+	aura.fill_policy = function () {
+		if (!aura._fill_policy) aura._fill_policy = frappe.xcall("reckon_aura_theme.api.fill_policy");
+		return aura._fill_policy;
+	};
+
+	// A photo is shrunk first (1600 px, JPEG): a phone picture is several MB and the AI reads the smaller one as well.
+	aura.read_fill_file = function (file, maxMb) {
+		return new Promise((resolve, reject) => {
+			if (!file) return resolve(null);
+			const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+			const isImage = /^image\//.test(file.type);
+			if (!isPdf && !isImage) return reject(new Error(__("Upload a photo (JPG, PNG, WebP) or a PDF.")));
+			const reader = new FileReader();
+			reader.onerror = () => reject(new Error(__("The file could not be read.")));
+			reader.onload = () => {
+				if (isPdf) {
+					if (file.size > maxMb * 1024 * 1024) return reject(new Error(__("The file is too large. The limit is {0} MB.", [maxMb])));
+					return resolve({ name: file.name, data: reader.result });
+				}
+				const img = new Image();
+				img.onerror = () => reject(new Error(__("The photo could not be read.")));
+				img.onload = () => {
+					const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+					const canvas = document.createElement("canvas");
+					canvas.width = Math.round(img.width * scale);
+					canvas.height = Math.round(img.height * scale);
+					canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+					resolve({ name: file.name, data: canvas.toDataURL("image/jpeg", 0.85) });
+				};
+				img.src = reader.result;
+			};
+			reader.readAsDataURL(file);
+		});
+	};
+
+	aura.fill_dialog = function (frm, policy) {
+		policy = policy || {};
+		let attached = null;
+		let recognition = null;
 		const d = new frappe.ui.Dialog({
 			title: "✦ " + __("Fill with AI"),
 			size: "large",
@@ -652,11 +694,19 @@
 					fieldtype: "HTML",
 					fieldname: "hint",
 					options: `<p class="text-muted" style="margin-bottom:8px">${__(
-						"Paste a purchase order, an email or rough notes. AI finds the party, items, quantities and rates, matches them to your masters, and fills this {0}. Nothing is saved until you click Save.",
+						"Paste a purchase order, an email or rough notes, speak it, or upload a photo or PDF. AI finds the party, items, quantities and rates, matches them to your masters, and fills this {0}. Nothing is saved until you click Save.",
 						[__(frm.doctype)]
-					)}</p>`,
+					)}</p>
+					<div class="aura-fill-tools" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+						<button type="button" class="btn btn-default btn-sm aura-fill-voice">🎤 ${__("Speak")}</button>
+						<select class="form-control input-sm aura-fill-lang" style="width:auto"><option value="en-US">English</option><option value="bn-BD">বাংলা</option></select>
+						<button type="button" class="btn btn-default btn-sm aura-fill-attach">📎 ${__("Photo or PDF")}</button>
+						<input type="file" class="aura-fill-file" accept="image/*,application/pdf" hidden>
+						<span class="text-muted small aura-fill-file-name"></span>
+					</div>
+					${policy.daily_limit ? `<p class="text-muted small" style="margin:0 0 6px">${__("{0} of {1} uses left today.", [policy.left == null ? policy.daily_limit : policy.left, policy.daily_limit])}</p>` : ""}`,
 				},
-				{ fieldtype: "Small Text", fieldname: "source", label: __("Source text"), reqd: 1 },
+				{ fieldtype: "Small Text", fieldname: "source", label: __("Source text") },
 				{
 					fieldtype: "Check",
 					fieldname: "replace_items",
@@ -666,16 +716,71 @@
 			],
 			primary_action_label: __("Fill form"),
 			primary_action: (values) => {
+				if (!(values.source || "").trim() && !attached) {
+					frappe.show_alert({ message: __("Paste some text, speak, or upload a photo or PDF first."), indicator: "orange" });
+					return;
+				}
 				const $p = d.get_primary_btn();
 				$p.prop("disabled", true).text(__("Reading…"));
 				frappe
-					.xcall("reckon_aura_theme.api.extract_document", { doctype: frm.doctype, text: values.source })
-					.then((r) => aura.apply_extraction(frm, r, values.replace_items))
+					.xcall("reckon_aura_theme.api.extract_document", {
+						doctype: frm.doctype,
+						text: values.source || "",
+						file_data: attached ? attached.data : null,
+					})
+					.then((r) => { aura._fill_policy = null; return aura.apply_extraction(frm, r, values.replace_items); })
 					.then(() => d.hide())
 					.catch(() => $p.prop("disabled", false).text(__("Fill form")));
 			},
 		});
 		d.$wrapper.addClass("aura-fill-dialog");
+		d.onhide = () => { try { recognition && recognition.stop(); } catch (e) { /* already stopped */ } };
+
+		// Voice: dictate into the text box (browser speech recognition; Chrome and Edge).
+		const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+		const $voice = d.$wrapper.find(".aura-fill-voice");
+		if (!Recognition) {
+			$voice.prop("disabled", true).attr("title", __("Voice input is not supported in this browser"));
+			d.$wrapper.find(".aura-fill-lang").hide();
+		} else {
+			const lang = (frappe.boot && frappe.boot.lang) === "bn" ? "bn-BD" : "en-US";
+			d.$wrapper.find(".aura-fill-lang").val(lang);
+			$voice.on("click", () => {
+				if (recognition) { recognition.stop(); return; }
+				recognition = new Recognition();
+				recognition.lang = d.$wrapper.find(".aura-fill-lang").val();
+				recognition.continuous = true;
+				recognition.interimResults = false;
+				recognition.onresult = (event) => {
+					let heard = "";
+					for (let i = event.resultIndex; i < event.results.length; i++) heard += event.results[i][0].transcript + " ";
+					const field = d.get_field("source");
+					field.set_value(((field.get_value() || "") + " " + heard).trim());
+				};
+				recognition.onend = () => { recognition = null; $voice.text("🎤 " + __("Speak")); };
+				recognition.onerror = () => { recognition = null; $voice.text("🎤 " + __("Speak")); };
+				$voice.text("⏹ " + __("Stop"));
+				recognition.start();
+			});
+		}
+
+		// A photo or PDF.
+		const $file = d.$wrapper.find(".aura-fill-file");
+		d.$wrapper.find(".aura-fill-attach").on("click", () => $file.trigger("click"));
+		$file.on("change", () => {
+			const file = $file[0].files[0];
+			aura.read_fill_file(file, policy.max_file_mb || 5)
+				.then((result) => {
+					attached = result;
+					d.$wrapper.find(".aura-fill-file-name").text(result ? "📎 " + result.name : "");
+				})
+				.catch((error) => {
+					attached = null;
+					$file.val("");
+					d.$wrapper.find(".aura-fill-file-name").text("");
+					frappe.show_alert({ message: error.message, indicator: "red" });
+				});
+		});
 		d.show();
 	};
 
