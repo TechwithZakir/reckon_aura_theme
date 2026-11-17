@@ -78,7 +78,7 @@ EXTRACT_PROMPT = (
 	"Reply with ONLY a JSON object, no prose, shaped exactly like: "
 	'{{"party": "<{party_type} name or null>", "due_date": "YYYY-MM-DD or null", '
 	'"delivery_date": "YYYY-MM-DD or null", "items": [{{"item": "<item code or name>", '
-	'"qty": <number>, "rate": <number or null>}}]}}'
+	'"qty": <number>, "rate": <number or null>, "uom": "<unit such as Nos, Kg, Box, or null>"}}]}}'
 )
 
 SKILL_GUIDES = (
@@ -947,6 +947,7 @@ def fill_policy():
 		"enabled": bool(cint(s.enable_ai_fill) and _ai_ready(s) and policy.get("enabled")),
 		"plan_blocked": bool(not policy.get("enabled")),
 		"daily_limit": limit,
+		"create": bool(cint(s.get("enable_ai_fill_create") if s.get("enable_ai_fill_create") is not None else 1) and policy.get("create", True)),
 		"left": max(limit - _fill_used(), 0) if limit else None,
 		"max_file_mb": MAX_FILL_FILE_BYTES // (1024 * 1024),
 	}
@@ -1040,7 +1041,7 @@ def extract_document(doctype, text=None, file_data=None):
 		raise
 
 	rows = data.get("items")
-	items, unmatched = [], []
+	items, unmatched, missing_items = [], [], []
 	for row in (rows if isinstance(rows, list) else [])[:100]:
 		if not isinstance(row, dict):
 			continue
@@ -1052,14 +1053,131 @@ def extract_document(doctype, text=None, file_data=None):
 			)
 		elif label:
 			unmatched.append(str(label)[:80])
+			missing_items.append(
+				{
+					"name": str(label).strip()[:140],
+					"qty": flt(row.get("qty")) or 1,
+					"rate": flt(row.get("rate")) or None,
+					"uom": (str(row.get("uom")).strip()[:40] if row.get("uom") else None),
+				}
+			)
 
 	party = data.get("party")
+	matched_party = _match_party(party_type, party)
 	return {
 		"party_type": party_type,
-		"party": _match_party(party_type, party),
+		"party": matched_party,
 		"party_text": str(party)[:140] if party else None,
 		"due_date": _date(data.get("due_date")),
 		"delivery_date": _date(data.get("delivery_date")),
 		"items": items,
 		"unmatched": unmatched,
+		"missing_party": str(party).strip()[:140] if party and not matched_party else None,
+		"missing_items": missing_items,
 	}
+
+
+def _default_group(doctype, single, field, fallback_field):
+	"""The group a new master goes into: the one in the module's settings, else the first leaf group."""
+	value = frappe.db.get_single_value(single, field) if single else None
+	if value and frappe.db.exists(doctype, value):
+		return value
+	return frappe.db.get_value(doctype, {"is_group": 0}, "name") or frappe.db.get_value(doctype, {}, "name")
+
+
+def _existing_name(doctype, name):
+	hit = frappe.get_list(doctype, filters={"name": name}, pluck="name", limit=1)
+	return hit[0] if hit else None
+
+
+def _create_party(party_type, name):
+	existing = _match_party(party_type, name)
+	if existing:
+		return existing
+	frappe.has_permission(party_type, "create", throw=True)
+	if party_type == "Customer":
+		doc = frappe.get_doc(
+			{
+				"doctype": "Customer",
+				"customer_name": name,
+				"customer_type": "Company",
+				"customer_group": _default_group("Customer Group", "Selling Settings", "customer_group", None),
+				"territory": _default_group("Territory", "Selling Settings", "territory", None),
+			}
+		)
+	else:
+		doc = frappe.get_doc(
+			{
+				"doctype": "Supplier",
+				"supplier_name": name,
+				"supplier_type": "Company",
+				"supplier_group": _default_group("Supplier Group", "Buying Settings", "supplier_group", None),
+			}
+		)
+	doc.insert()  # as the user: their permissions and the site's own rules for the new record apply
+	doc.add_comment("Comment", _("Created by Fill with AI from pasted text or a file. Please review."))
+	return doc.name
+
+
+def _create_item(party_type, row):
+	name = str(row.get("name") or "").strip()[:140]
+	existing = _match_item(name, party_type)
+	if existing:
+		return existing
+	frappe.has_permission("Item", "create", throw=True)
+	uom = str(row.get("uom") or "").strip()
+	if not uom or not frappe.db.exists("UOM", uom):
+		uom = frappe.db.get_single_value("Stock Settings", "stock_uom") or "Nos"
+	doc = frappe.get_doc(
+		{
+			"doctype": "Item",
+			"item_code": name,
+			"item_name": name,
+			"item_group": _default_group("Item Group", "Stock Settings", "item_group", None),
+			"stock_uom": uom,
+			"is_sales_item": 1 if party_type == "Customer" else 0,
+			"is_purchase_item": 1 if party_type == "Supplier" else 0,
+			"description": name,
+		}
+	)
+	doc.insert()
+	doc.add_comment("Comment", _("Created by Fill with AI from pasted text or a file. Please review."))
+	return doc.name
+
+
+@frappe.whitelist(methods=["POST"])
+@rate_limit(limit=30, seconds=60 * 60)
+def create_missing(doctype, party=None, items=None):
+	"""Create the customer or supplier and the items Fill with AI could not match, after the user confirmed them.
+
+	Returns the names to use. Each record is made by the user with their own permissions.
+	"""
+	_require_desk_user()
+	if doctype not in PARTY_FIELDS:
+		frappe.throw(_("Fill with AI is not available for {0}.").format(doctype))
+	frappe.has_permission(doctype, "create", throw=True)
+	s = _settings()
+	policy = _fill_policy()
+	allowed = (
+		cint(s.enable_ai_fill)
+		and policy.get("enabled")
+		and policy.get("create", True)
+		and cint(s.get("enable_ai_fill_create") if s.get("enable_ai_fill_create") is not None else 1)
+	)
+	if not allowed:
+		frappe.throw(_("Creating records with Fill with AI is turned off."), frappe.PermissionError)
+	if isinstance(items, str):
+		try:
+			items = json.loads(items)
+		except ValueError:
+			frappe.throw(_("The list of items could not be read."))
+	party_type, _field = PARTY_FIELDS[doctype]
+	result = {"party": None, "items": []}
+	name = str(party or "").strip()[:140]
+	if name:
+		result["party"] = _create_party(party_type, name)
+	for row in (items if isinstance(items, list) else [])[:50]:
+		if isinstance(row, dict) and str(row.get("name") or "").strip():
+			code = _create_item(party_type, row)
+			result["items"].append({"item_code": code, "qty": flt(row.get("qty")) or 1, "rate": flt(row.get("rate")) or None})
+	return result

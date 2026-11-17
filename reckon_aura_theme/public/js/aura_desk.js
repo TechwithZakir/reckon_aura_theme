@@ -728,7 +728,8 @@
 						text: values.source || "",
 						file_data: attached ? attached.data : null,
 					})
-					.then((r) => { aura._fill_policy = null; return aura.apply_extraction(frm, r, values.replace_items); })
+					.then((r) => { aura._fill_policy = null; return aura.confirm_missing(frm, r, policy); })
+					.then((r) => aura.apply_extraction(frm, r, values.replace_items))
 					.then(() => d.hide())
 					.catch(() => $p.prop("disabled", false).text(__("Fill form")));
 			},
@@ -782,6 +783,52 @@
 				});
 		});
 		d.show();
+	};
+
+	// Customers, suppliers and items the AI found but you do not have yet: the user decides which to create.
+	aura.confirm_missing = function (frm, r, policy) {
+		const party = r.missing_party, items = r.missing_items || [];
+		if (!policy.create || (!party && !items.length)) return Promise.resolve(r);
+		return new Promise((resolve) => {
+			const fields = [{
+				fieldtype: "HTML",
+				options: `<p class="text-muted">${__("These are not in your records yet. Tick what to create; each is made with default settings and marked for review. You can rename them first.")}</p>`,
+			}];
+			if (party) {
+				fields.push({ fieldtype: "Check", fieldname: "make_party", label: __("Create {0}", [__(r.party_type)]), default: 1 });
+				fields.push({ fieldtype: "Data", fieldname: "party_name", label: __(r.party_type) + " " + __("Name"), default: party, depends_on: "make_party" });
+			}
+			items.forEach((row, i) => {
+				fields.push({ fieldtype: "Check", fieldname: `make_${i}`, label: __("Create item"), default: 1 });
+				fields.push({ fieldtype: "Data", fieldname: `name_${i}`, label: __("Item") + ` ${i + 1}` + (row.qty ? ` (${__("Qty")} ${row.qty}${row.uom ? " " + row.uom : ""})` : ""), default: row.name, depends_on: `make_${i}` });
+			});
+			let done = false;
+			const finish = (value) => { if (!done) { done = true; resolve(value); } };
+			const dialog = new frappe.ui.Dialog({
+				title: "✦ " + __("Create what is missing?"),
+				fields,
+				primary_action_label: __("Create and fill"),
+				primary_action: (v) => {
+					const chosen = items.map((row, i) => ({ ...row, name: (v[`name_${i}`] || "").trim(), make: v[`make_${i}`] })).filter((row) => row.make && row.name);
+					const partyName = party && v.make_party ? (v.party_name || "").trim() : "";
+					if (!partyName && !chosen.length) { dialog.hide(); return; }
+					dialog.get_primary_btn().prop("disabled", true).text(__("Creating…"));
+					frappe.xcall("reckon_aura_theme.api.create_missing", { doctype: frm.doctype, party: partyName, items: JSON.stringify(chosen) })
+						.then((made) => {
+							const merged = Object.assign({}, r);
+							if (made.party) { merged.party = made.party; merged.missing_party = null; }
+							merged.items = (r.items || []).concat(made.items || []);
+							finish(merged);
+							dialog.hide();
+						})
+						.catch(() => dialog.get_primary_btn().prop("disabled", false).text(__("Create and fill")));
+				},
+				secondary_action_label: __("Fill without creating"),
+				secondary_action: () => { finish(r); dialog.hide(); },
+			});
+			dialog.onhide = () => finish(r);
+			dialog.show();
+		});
 	};
 
 	aura.apply_extraction = async function (frm, r, replace) {

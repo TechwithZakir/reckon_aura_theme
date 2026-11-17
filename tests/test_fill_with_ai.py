@@ -104,6 +104,40 @@ class PolicyTests(unittest.TestCase):
         self.assertEqual(api._fill_policy(), {"enabled": True, "daily_limit": None})
 
 
+class CreateMissingTests(unittest.TestCase):
+    def run_create(self, policy, settings=None, items=None):
+        api, frappe, _c = load_api()
+        s = SimpleNamespace(enable_ai_fill=1, get=lambda k: (settings or {}).get(k))
+        frappe.has_permission = Mock()
+        with patch.object(api, "_require_desk_user"), patch.object(api, "_settings", return_value=s),                 patch.object(api, "_fill_policy", return_value=policy),                 patch.object(api, "_create_party", return_value="ABC Traders") as party,                 patch.object(api, "_create_item", side_effect=lambda t, row: row["name"]) as item:
+            try:
+                result = api.create_missing("Purchase Order", "ABC Traders", items or [{"name": "Cola 500ml", "qty": 3, "rate": 40}])
+            except Exception as exc:
+                return exc, party, item, frappe
+            return result, party, item, frappe
+
+    def test_it_creates_only_when_the_plan_and_the_setting_allow(self):
+        result, party, item, frappe = self.run_create({"enabled": True, "daily_limit": None, "create": True})
+        self.assertEqual(result["party"], "ABC Traders")
+        self.assertEqual(result["items"], [{"item_code": "Cola 500ml", "qty": 3.0, "rate": 40.0}])
+        blocked, party, item, frappe = self.run_create({"enabled": True, "daily_limit": None, "create": False})
+        self.assertIsInstance(blocked, frappe.PermissionError)
+        party.assert_not_called()
+        item.assert_not_called()
+        off, party, item, frappe = self.run_create({"enabled": True, "create": True}, settings={"enable_ai_fill_create": 0})
+        self.assertIsInstance(off, frappe.PermissionError)
+
+    def test_extraction_asks_before_anything_is_created(self):
+        js = JS.read_text(encoding="utf-8")
+        # The dialog comes first; the create call only runs from its confirm button.
+        self.assertIn("confirm_missing", js)
+        self.assertLess(js.index("Create what is missing?"), js.index("reckon_aura_theme.api.create_missing"))
+        self.assertIn("Fill without creating", js)
+        api_source = API.read_text(encoding="utf-8")
+        extract = api_source[api_source.index("def extract_document"):api_source.index("def _default_group")]
+        self.assertNotIn("_create_", extract)  # extract_document itself never creates a record
+
+
 class DialogTests(unittest.TestCase):
     def test_the_dialog_offers_text_voice_and_a_file_and_hides_without_the_plan(self):
         js = JS.read_text(encoding="utf-8")
