@@ -128,8 +128,8 @@
 		const parts = [];
 		if (on(c.ai_bar)) {
 			parts.push(
-				`<button type="button" class="aura-ask-trigger" data-aura-action="ask" title="${__("Aura AI")}">` +
-					`<span class="aura-spark">✦</span><span class="aura-ask-text">${__("Aura AI")}</span>` +
+				`<button type="button" class="aura-ask-trigger" data-aura-action="ask" title="${__("Ask Aura AI")}">` +
+					`<span class="aura-spark">✦</span><span class="aura-ask-text">${__("Ask Aura AI")}</span>` +
 					`<kbd>${IS_MAC ? "⌘J" : "Ctrl J"}</kbd></button>`
 			);
 		}
@@ -194,11 +194,11 @@
 		const brand = esc(cfg().brand_name || "ReckonERP");
 		aura.$ask = $(`
 			<div class="aura-ask-backdrop" role="presentation">
-				<section class="aura-ask" role="dialog" aria-modal="true" aria-label="${__("Aura AI")}">
+				<section class="aura-ask" role="dialog" aria-modal="true" aria-label="${__("Ask Aura AI")}">
 					<header class="aura-ask-header">
 						<div class="aura-ask-brand">
 							<span class="aura-spark-badge">✦</span>
-							<div><strong>${__("Aura AI")}</strong><small>${__("ERP support assistant")}</small></div>
+							<div><strong>${__("Ask Aura AI")}</strong><small>${__("ERP support assistant")}</small></div>
 						</div>
 						<div class="aura-ask-actions">
 							<button type="button" class="aura-ask-tool" data-aura-ask-action="new-chat" title="${__(
@@ -236,7 +236,11 @@
 			</div>`).appendTo(document.body);
 		const $textarea = aura.$ask.find("textarea");
 		aura.render_ask_welcome();
-		aura.$ask.on("mousedown", (e) => e.target === aura.$ask[0] && aura.close_ask());
+		aura.$ask.on("mousedown", (e) => {
+			// Only a press on the empty backdrop closes the panel. A jQuery handler must not give back false: that cancels
+			// the browser's default for every press inside the panel (text selection and focus), which is what broke it.
+			if (e.target === aura.$ask[0]) aura.close_ask();
+		});
 		// Clicking anywhere in the message box (not only on its one text line) puts the cursor in it.
 		aura.$ask.on("mousedown", ".aura-ask-compose", (e) => {
 			if (e.target === $textarea[0] || $(e.target).closest("button").length) return;

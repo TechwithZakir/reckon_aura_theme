@@ -138,6 +138,20 @@ class CreateMissingTests(unittest.TestCase):
         self.assertNotIn("_create_", extract)  # extract_document itself never creates a record
 
 
+class DockMouseTests(unittest.TestCase):
+    def test_no_dock_handler_returns_false_so_mouse_selection_and_focus_work(self):
+        js = JS.read_text(encoding="utf-8")
+        start = js.index("aura.build_ask = function")
+        dock = js[start : js.index("aura.render_ask_welcome = function")]
+        # jQuery treats `return false` as preventDefault: it stopped text selection in the whole panel.
+        self.assertNotIn("&& aura.close_ask()", dock)
+        self.assertNotIn("return false", dock)
+
+    def test_the_launcher_and_panel_are_called_ask_aura_ai(self):
+        js = JS.read_text(encoding="utf-8")
+        self.assertGreaterEqual(js.count('__("Ask Aura AI")'), 4)
+
+
 class DialogTests(unittest.TestCase):
     def test_the_dialog_offers_text_voice_and_a_file_and_hides_without_the_plan(self):
         js = JS.read_text(encoding="utf-8")
