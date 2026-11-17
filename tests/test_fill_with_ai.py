@@ -138,6 +138,22 @@ class CreateMissingTests(unittest.TestCase):
         self.assertNotIn("_create_", extract)  # extract_document itself never creates a record
 
 
+class SidebarToolsTests(unittest.TestCase):
+    def test_the_desk_puts_ask_aura_ai_and_a_collapse_button_in_the_sidebar_bottom_group(self):
+        js = JS.read_text(encoding="utf-8")
+        self.assertIn('document.querySelector(".body-sidebar-bottom")', js)
+        self.assertIn("aura-tools aura-tools--sidebar", js)
+        self.assertIn('data-aura-action="collapse"', js)
+        self.assertIn('document.querySelector(".sidebar-collapse-arrow")', js)  # the Desk's own fold-to-rail control
+        self.assertIn('$(document).on("sidebar-expand"', js)
+        self.assertLess(js.index("body-sidebar-bottom"), js.index("v16 desktop navbar"))  # the sidebar is tried first
+
+    def test_one_shared_stylesheet_block_serves_the_desk_and_the_crm(self):
+        css = (JS.parents[1] / "css" / "aura_desk.css").read_text(encoding="utf-8")
+        for selector in (".aura-tools--sidebar", ".aura-side-item", ".aura-tools--sidebar.is-collapsed"):
+            self.assertIn(selector, css, selector)
+
+
 class DockMouseTests(unittest.TestCase):
     def test_no_dock_handler_returns_false_so_mouse_selection_and_focus_work(self):
         js = JS.read_text(encoding="utf-8")

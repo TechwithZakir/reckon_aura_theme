@@ -27,6 +27,7 @@
 		mic: "M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zM19 11a7 7 0 0 1-14 0M12 18v4M8 22h8",
 		send: "M22 2 11 13M22 2 15 22 11 13 2 9 22 2",
 		select: "M8 5h12v14H8zM4 17V3h14",
+		collapse: "M15 18l-6-6 6-6",
 	};
 
 	const esc = (v) => frappe.utils.escape_html(v == null ? "" : String(v));
@@ -118,13 +119,30 @@
 		if (dens) dens.innerHTML = svg(root.getAttribute("data-aura-density") === "compact" ? IC.dense : IC.rows);
 	};
 
+	// Collapsed sidebar: icons only, and the button says what it will do.
+	aura.sync_sidebar_tools = function () {
+		const tools = document.querySelector(".aura-tools--sidebar");
+		if (!tools) return;
+		const collapsed = document.body.classList.contains("sidebar-collapsed");
+		tools.classList.toggle("is-collapsed", collapsed);
+		const label = tools.querySelector(".aura-side-label");
+		if (label) label.textContent = collapsed ? __("Expand") : __("Collapse");
+		const button = tools.querySelector('[data-aura-action="collapse"]');
+		if (button) button.setAttribute("title", collapsed ? __("Expand sidebar") : __("Collapse sidebar"));
+	};
+	$(document).on("sidebar-expand", () => setTimeout(() => aura.sync_sidebar_tools(), 0));
+
 	aura.mount_tools = function () {
 		const c = cfg();
 		if (c.enabled === 0 || !on(c.ai_bar)) {
 			aura.close_ask();
 			document.querySelectorAll('.aura-tools [data-aura-action="ask"]').forEach((el) => el.remove());
 		}
-		if (c.enabled === 0 || document.querySelector(".aura-tools")) return;
+		if (c.enabled === 0) return;
+		const sidebarHost = document.querySelector(".body-sidebar-bottom");
+		const existing = document.querySelector(".aura-tools");
+		if (existing && (existing.classList.contains("aura-tools--sidebar") || !sidebarHost)) return;
+		if (existing) (existing.closest(".aura-tools-item") || existing).remove();  // moved into the sidebar once it is on screen
 		const parts = [];
 		if (on(c.ai_bar)) {
 			parts.push(
@@ -143,6 +161,23 @@
 
 		const el = document.createElement("div");
 		el.className = "aura-tools";
+
+		if (sidebarHost) {
+			// The same place and the same stylesheet as in the CRM: the sidebar's bottom group, above the user menu.
+			// Collapse / Expand folds the sidebar to its rail, like the CRM sidebar's own button.
+			const icons = parts.filter((p) => p.includes("aura-icon-btn"));
+			const ask = parts.filter((p) => p.includes("aura-ask-trigger"));
+			el.className = "aura-tools aura-tools--sidebar";
+			el.innerHTML =
+				ask.join("") +
+				`<div class="aura-tools-row">${icons.join("")}</div>` +
+				`<button type="button" class="aura-side-item" data-aura-action="collapse">` +
+				`${svg(IC.collapse, 15)}<span class="aura-side-label"></span></button>`;
+			sidebarHost.insertBefore(el, sidebarHost.firstChild);
+			aura.sync_sidebar_tools();
+			aura.sync_tool_icons();
+			return;
+		}
 		el.innerHTML = parts.join("");
 
 		// v16 desktop navbar → v15 navbar → floating dock fallback.
@@ -174,6 +209,11 @@
 		else if (action === "density") aura.toggle_density();
 		else if (action === "accent") aura.cycle_accent();
 		else if (action === "mode") aura.toggle_mode();
+		else if (action === "collapse") {
+			const arrow = document.querySelector(".sidebar-collapse-arrow");
+			if (arrow) arrow.click();
+			setTimeout(() => aura.sync_sidebar_tools(), 0);
+		}
 	});
 
 	/* -------------------------------------------------------- Ask panel */
