@@ -1,5 +1,5 @@
 """Server side of the ReckonERP theme: public config, the workspace brief,
-the Ask AI support chat and Fill-with-AI document extraction.
+the Aura AI support chat and Fill-with-AI document extraction.
 
 Every data read goes through frappe.get_list, so users only ever see
 (and the AI only ever receives) records they are already permitted to read.
@@ -20,7 +20,7 @@ from frappe.utils import add_days, add_months, cint, flt, fmt_money, get_first_d
 
 SETTINGS = "Aura Theme Settings"
 
-# Brand shown on the login page and in the Ask AI bar. Blank or stock names
+# Brand shown on the login page and in the Aura AI bar. Blank or stock names
 # (the framework's own) are replaced by these; a name an admin chose is kept.
 BRAND_NAME = "ReckonERP"
 BRAND_LOGO = "/assets/reckon_aura_theme/images/reckonerp-logo.webp"
@@ -56,7 +56,7 @@ PARTY_FIELDS = {
 }
 
 DEFAULT_PROMPT = (
-	"You are the ReckonERP support assistant, powered by Frappe. Answer clearly and concretely "
+	"You are Aura AI, the ReckonERP support assistant, powered by Frappe. Answer clearly and concretely "
 	"using the supplied support guides and facts. If they do not contain the answer, say so and "
 	"suggest where in the ERP the user can find it (page, DocType, or report name). "
 	"Use the company currency. Prefer short bullet points. Never invent figures."
@@ -750,7 +750,7 @@ def _consume_daily_ask_quota(s):
 	configured_limit = s.get("ask_ai_daily_limit")
 	limit = cint(configured_limit) if configured_limit is not None else DEFAULT_DAILY_ASK_LIMIT
 	if limit < 0:
-		frappe.throw(_("The daily Ask AI limit must be zero or greater."))
+		frappe.throw(_("The daily Aura AI limit must be zero or greater."))
 	if limit == 0:
 		return
 
@@ -761,7 +761,7 @@ def _consume_daily_ask_quota(s):
 	if used > limit:
 		cache.incrby(key, -1)
 		frappe.throw(
-			_("You have reached the daily Ask AI limit of {0} questions. It resets tomorrow.").format(limit),
+			_("You have reached the daily Aura AI limit of {0} questions. It resets tomorrow.").format(limit),
 			frappe.TooManyRequestsError,
 		)
 
@@ -916,7 +916,7 @@ def _fill_key():
 
 
 def _fill_used():
-	return cint(_cache().get(_fill_key()) or 0)  # the counter is a raw Redis integer, like the Ask AI one
+	return cint(_cache().get(_fill_key()) or 0)  # the counter is a raw Redis integer, like the Aura AI one
 
 
 def _take_fill_use(limit):

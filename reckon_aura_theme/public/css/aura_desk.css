@@ -1036,3 +1036,15 @@ body.aura-ask-page-reflow {
 	}
 	.body-sidebar-container:not(.expanded) .body-sidebar::before { display: none; }
 }
+
+/* The Ask panel is read and copied from: everything in it can be selected with the mouse, buttons excepted. */
+.aura-ask, .aura-ask :not(button):not(button *):not(svg):not(svg *):not(kbd) {
+	user-select: text !important;
+	-webkit-user-select: text !important;
+}
+.aura-ask button, .aura-ask kbd { user-select: none; -webkit-user-select: none; }
+.aura-ask-compose { cursor: text; }
+.aura-ask-compose button { cursor: pointer; }
+.aura-ask, .aura-ask * { pointer-events: auto; }
+.aura-ask-backdrop.is-docked { pointer-events: none; }
+.aura-ask-backdrop.is-docked .aura-ask, .aura-ask-backdrop.is-docked .aura-ask * { pointer-events: auto; }

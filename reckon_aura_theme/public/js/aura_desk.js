@@ -1,7 +1,7 @@
 /* Reckon Aura Theme — desk runtime for Frappe / ERPNext v16
  * - applies site + per-browser theme prefs (accent, density)
- * - navbar tools: Ask AI, density, accent, light/dark
- * - Ask AI chat (Ctrl/⌘+J): multi-turn ERP support with voice input and page jumps
+ * - navbar tools: Aura AI, density, accent, light/dark
+ * - Aura AI chat (Ctrl/⌘+J): multi-turn ERP support with voice input and page jumps
  * - brief card on workspaces
  * - "Fill with AI" on sales / purchase transactions
  */
@@ -128,8 +128,8 @@
 		const parts = [];
 		if (on(c.ai_bar)) {
 			parts.push(
-				`<button type="button" class="aura-ask-trigger" data-aura-action="ask" title="${__("Ask AI")}">` +
-					`<span class="aura-spark">✦</span><span class="aura-ask-text">${__("Ask AI")}</span>` +
+				`<button type="button" class="aura-ask-trigger" data-aura-action="ask" title="${__("Aura AI")}">` +
+					`<span class="aura-spark">✦</span><span class="aura-ask-text">${__("Aura AI")}</span>` +
 					`<kbd>${IS_MAC ? "⌘J" : "Ctrl J"}</kbd></button>`
 			);
 		}
@@ -194,11 +194,11 @@
 		const brand = esc(cfg().brand_name || "ReckonERP");
 		aura.$ask = $(`
 			<div class="aura-ask-backdrop" role="presentation">
-				<section class="aura-ask" role="dialog" aria-modal="true" aria-label="${__("Ask AI")}">
+				<section class="aura-ask" role="dialog" aria-modal="true" aria-label="${__("Aura AI")}">
 					<header class="aura-ask-header">
 						<div class="aura-ask-brand">
 							<span class="aura-spark-badge">✦</span>
-							<div><strong>${brand} AI</strong><small>${__("ERP support assistant")}</small></div>
+							<div><strong>${__("Aura AI")}</strong><small>${__("ERP support assistant")}</small></div>
 						</div>
 						<div class="aura-ask-actions">
 							<button type="button" class="aura-ask-tool" data-aura-ask-action="new-chat" title="${__(
@@ -219,7 +219,7 @@
 					<footer class="aura-ask-composer">
 						<div class="aura-ask-compose">
 							<textarea rows="1" maxlength="2000" autocomplete="off" spellcheck="true"
-								placeholder="${__("Message {0} AI…", [brand])}" aria-label="${__("Message")}"></textarea>
+								placeholder="${__("Message Aura AI…")}" aria-label="${__("Message")}"></textarea>
 							<div class="aura-ask-compose-actions">
 								<button type="button" class="aura-ask-tool aura-ask-select-input" title="${__(
 									"Select all input"
@@ -237,6 +237,22 @@
 		const $textarea = aura.$ask.find("textarea");
 		aura.render_ask_welcome();
 		aura.$ask.on("mousedown", (e) => e.target === aura.$ask[0] && aura.close_ask());
+		// Clicking anywhere in the message box (not only on its one text line) puts the cursor in it.
+		aura.$ask.on("mousedown", ".aura-ask-compose", (e) => {
+			if (e.target === $textarea[0] || $(e.target).closest("button").length) return;
+			e.preventDefault();
+			$textarea[0].focus();
+		});
+		// Desk forms and refreshes pull focus to their own first field. While the person is working in this panel,
+		// give focus back, but never when they have just clicked somewhere else on purpose.
+		let lastInside = 0, lastOutside = 0;
+		const inside = (target) => aura.$ask[0].contains(target);
+		document.addEventListener("mousedown", (e) => { if (inside(e.target)) lastInside = Date.now(); else lastOutside = Date.now(); }, true);
+		document.addEventListener("keydown", (e) => { if (inside(e.target)) lastInside = Date.now(); }, true);
+		document.addEventListener("focusin", (e) => {
+			if (!aura.$ask.hasClass("is-open") || inside(e.target)) return;
+			if (lastInside > lastOutside && Date.now() - lastInside < 4000) setTimeout(() => $textarea[0].focus(), 0);
+		}, true);
 		aura.$ask.on("click", ".aura-ask-select-input", function () {
 			$textarea[0].focus();
 			$textarea[0].select();
