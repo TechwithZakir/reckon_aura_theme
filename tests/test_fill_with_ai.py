@@ -138,20 +138,16 @@ class CreateMissingTests(unittest.TestCase):
         self.assertNotIn("_create_", extract)  # extract_document itself never creates a record
 
 
-class SidebarToolsTests(unittest.TestCase):
-    def test_the_desk_puts_ask_aura_ai_and_a_collapse_button_in_the_sidebar_bottom_group(self):
+class SidebarCollapseTests(unittest.TestCase):
+    def test_the_desk_sidebar_gets_a_collapse_expand_row_and_the_tools_keep_their_place(self):
         js = JS.read_text(encoding="utf-8")
         self.assertIn('document.querySelector(".body-sidebar-bottom")', js)
-        self.assertIn("aura-tools aura-tools--sidebar", js)
-        self.assertIn('data-aura-action="collapse"', js)
+        self.assertIn("data-aura-collapse", js)
         self.assertIn('document.querySelector(".sidebar-collapse-arrow")', js)  # the Desk's own fold-to-rail control
         self.assertIn('$(document).on("sidebar-expand"', js)
-        self.assertLess(js.index("body-sidebar-bottom"), js.index("v16 desktop navbar"))  # the sidebar is tried first
-
-    def test_one_shared_stylesheet_block_serves_the_desk_and_the_crm(self):
+        self.assertNotIn("aura-tools--sidebar", js)  # Ask Aura AI is not moved into the sidebar
         css = (JS.parents[1] / "css" / "aura_desk.css").read_text(encoding="utf-8")
-        for selector in (".aura-tools--sidebar", ".aura-side-item", ".aura-tools--sidebar.is-collapsed"):
-            self.assertIn(selector, css, selector)
+        self.assertIn(".aura-sidebar-collapse", css)
 
 
 class DockMouseTests(unittest.TestCase):
