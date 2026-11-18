@@ -66,7 +66,7 @@ The user approved support guides for Selling/Sales, Buying/Procurement,
 Stock/Inventory, HR/Payroll, Manufacturing, CRM/Projects, and custom modules.
 Each guide lives in its own `skills/{module}_skills.md` file and is selected
 from the current Desk route and question. When a question clearly spans two
-areas, attach at most two relevant guides.
+areas, attach at most three relevant guides.
 
 - Use official ERPNext documentation for standard ERPNext behavior.
 - Identify Frappe HR and Frappe CRM as separate apps; do not imply either is

@@ -44,6 +44,12 @@ and report preferences switched on and the company as their default.
 - **Invoice or receipt needed:** Subscription > Invoices (PDF).
 - **Cannot change the company name or details:** the company record is managed by Reckon; ask support.
 
+## Support
+
+Email support@reckon.tech or WhatsApp +8801325-009955 (www.reckon.tech). Say what you were doing, the exact message and
+your company name; hide customer, employee and bank details in screenshots. Support is by email and WhatsApp; Aura
+has no other contact details to give.
+
 ## Copilot ideas
 
 Compare plans for a business size and currency, explain what a subscription includes, plan which staff get which

@@ -187,6 +187,7 @@ SKILL_GUIDES = (
 		"routes": ("reckonerp-subscription", "reckonerp-team"),
 		"markers": (
 			"subscription",
+			"my subscription",
 			"my plan",
 			"pricing",
 			"free trial",
@@ -844,7 +845,7 @@ def _select_skill_guides(question, route):
 		guide = match[1]
 		if guide not in selected:
 			selected.append(guide)
-		if len(selected) == 2:
+		if len(selected) == 3:
 			break
 	return selected
 

@@ -150,3 +150,27 @@ class LinkTests(unittest.TestCase):
         js = (HERE.parent / "reckon_aura_theme" / "public" / "js" / "aura_desk.js").read_text(encoding="utf-8")
         for needle in ('target = "_blank"', "noopener noreferrer", "reckon_aura_theme.api.get_links", "aura.autolink", "aura-table"):
             self.assertIn(needle, js)
+
+
+class ContactTests(unittest.TestCase):
+    def test_guides_give_only_the_real_support_contact(self):
+        import re
+
+        api, _frappe, _cache = support.load_api()
+        allowed_emails = {"support@reckon.tech"}
+        for path in api.SKILLS_DIR.glob("*.md"):
+            text = path.read_text(encoding="utf-8")
+            with self.subTest(guide=path.name):
+                found = set(re.findall(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+", text))
+                self.assertLessEqual(found, allowed_emails)
+        playbook = (api.SKILLS_DIR / api.PLAYBOOK_FILE).read_text(encoding="utf-8")
+        self.assertIn("support@reckon.tech", playbook)
+        self.assertIn("never invent contact details", playbook.casefold())
+
+
+class SelectionTests(unittest.TestCase):
+    def test_a_subscription_question_reaches_the_account_guide_even_on_another_products_page(self):
+        api, _frappe, _cache = support.load_api()
+        ids = [g["id"] for g in api._select_skill_guides("How do I add Reckon CRM or Sales AI Agent to my subscription?", "accounts-saas/sales-invoice")]
+        self.assertIn("account_platform", ids)
+        self.assertLessEqual(len(ids), 3)
