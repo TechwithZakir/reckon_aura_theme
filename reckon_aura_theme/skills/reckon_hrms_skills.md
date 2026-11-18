@@ -1,0 +1,88 @@
+# Reckon HRMS support guide
+
+Reckon HRMS is HR, attendance, leave and payroll for one company, with two guided pages: **HR Studio** and
+**Payroll Studio**, a Home page, biometric attendance and an app check-in. It builds on Frappe HR's engine. Frappe
+HR remains authoritative for standard behaviour; payroll and statutory rules depend on local law and company policy
+(not legal or tax advice).
+
+## Where things are
+
+Open Reckon HRMS from the Apps screen (`/desk/reckon-hrms`). Menu: Home, HR Studio, Payroll Studio, Dashboard,
+People (Employee, Department, Designation, Branch, Employment Type, Employee Grade, Exit Interview, Office
+Location), Time and Attendance (Check in/out, Attendance, Biometric Devices, Shift Type, Shift Assignment, Holiday
+List, Holiday List Assignment), Leave and Expense (Leave Application, Leave Type, Leave Allocation, Leave Policy
+Assignment, Leave Ledger Entry, Expense Claim, Expense Claim Type), Payroll (Payroll Entry, Salary Slip, Salary
+Structure, Structure Assignment, Salary Component, Additional Salary, Income Tax Slab, Benefit Ledger), and HR and
+Payroll reports.
+
+## HR Studio (tabs, in order)
+
+Hiring, Company and employee setup, Onboarding, Employee details, Time and attendance, Leave and holidays, Exit.
+Each tab lists the standard records with a list icon and an add icon. **Employee details** shows employee cards with
+search, branch, department, status filters, group-by and a Create button (opens the new employee form).
+
+## Setup order for a new company
+
+1. Offices (Branch), Departments, Job titles (Designation), Levels (Employee Grade), Types (Employment Type).
+2. Holiday List for the year (the company's default holiday list is used for new employees).
+3. Leave Types, then Leave Allocations per employee.
+4. Employees (a new employee automatically gets a Holiday List Assignment).
+5. Salary Components (pay items), a Salary Structure, then Structure Assignments. In Payroll Studio > Salary rules
+   the bulk button gives a structure to everyone without one; its start date should be the **1st of the month** so
+   that month's salary can run.
+
+## Payroll Studio: run salary in five steps (Run salary tab)
+
+1 Choose month and people (Find employees). 2 Check the list (who has no structure is flagged). 3 Make draft slips.
+4 Review and approve (submits slips; the approval asks for confirmation). 5 Pay: pick the cash or bank account,
+type a reference, record payment (one journal entry; each employee is named on the payable account). Held payments
+are left out; bank and wallet CSV sheets are available. Nothing is paid before step 5.
+
+## Common problems and fixes
+
+- **"No Holiday List was found for Employee":** create or submit a Holiday List Assignment for the employee.
+- **"Please assign a Salary Structure ... applicable from or before <first day>":** the structure assignment starts
+  after the period start; add one dated on or before the 1st (or change the period).
+- **0 draft slips made:** the page now shows the reason; fix it and run Create draft slips again.
+- **"Please set account in Salary Component" / unknown account:** the first slip adds the company's expense or
+  payable account to each pay item; resubmit the slip.
+- **"Account type should be set Payable for payroll payable account":** the company's payroll payable account must be
+  of type Payable (setup does this).
+- **Leave application blocked:** check Leave Allocation, Leave Type, the approver and the holiday list.
+- **Provident Fund report errors:** the India-specific provident fund report is not offered; use Salary Register.
+- **Employee Advance Summary missing:** requires the Employee Advance record type, which is not part of the plan.
+
+## Company separation
+
+Employees, departments, attendance, leave, salary slips and payroll runs belong to one company. Designations,
+Leave Types, Salary Components, Branches and similar lists have vendor rows (read-only) plus the company's own.
+HR Settings and Payroll Settings are read-only for companies.
+
+## Copilot ideas
+
+Explain a salary slip line by line, check why an employee has no balance, draft a leave policy, suggest the right
+reports for a monthly HR review, prepare a payroll run checklist, translate a policy into Bangla.
+
+## Autopilot limits
+
+Aura does not run payroll. The Studio's batch steps (draft slips, approve) run after a person clicks. Schedule a
+monthly reminder for the payroll checklist; keep approval and payment with HR and accounts.
+
+## Prompts to try
+
+- How do I run this month's salary in Payroll Studio, step by step?
+- Why can't I create a leave application for this employee?
+- How do I set up shifts and biometric attendance?
+- What should I check before submitting salary slips?
+- How do I add a new employee and give them leave?
+- Why did the payroll run say no salary structure?
+- How do I record attendance for a day I missed?
+- Explain this salary slip to the employee in simple words.
+- How do I start HR setup for a new company?
+
+## Prompts to try (Bangla)
+
+- Payroll Studio-তে কীভাবে এই মাসের বেতন চালাব?
+- নতুন কর্মী যোগ করে কীভাবে ছুটি বরাদ্দ করব?
+- আমার এই কর্মীর বেতন স্লিপ কেন তৈরি হচ্ছে না?
+- বায়োমেট্রিক হাজিরা কীভাবে চালু করব?

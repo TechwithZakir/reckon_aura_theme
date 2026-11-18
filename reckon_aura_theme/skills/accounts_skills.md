@@ -1,5 +1,8 @@
 # Accounts support guide
 
+> **ReckonERP customers use ReckonBooks** (accounting, sales, purchase, inventory and stock). Its menu, company rules and
+> day-to-day flows are in the ReckonBooks guide; use this guide for standard ERPNext accounting concepts.
+
 This guide helps users understand common accounting workflows and choose the
 next useful step. It describes standard ERPNext behavior, not the live setup of
 any particular site.

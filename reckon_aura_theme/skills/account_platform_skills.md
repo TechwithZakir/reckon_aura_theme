@@ -1,0 +1,71 @@
+# ReckonERP account, subscription and team guide
+
+The ReckonERP platform runs one **company** per subscription. A company subscribes to products (ReckonBooks, Reckon
+HRMS, Reckon CRM, Sales AI Agent, Distribution) directly or through the ReckonERP plan, and invites its own people.
+This guide covers signup, plans, billing, team access and the account pages.
+
+## Plans and trial
+
+- Every product has Basic, Standard and Enterprise plans, monthly or yearly, in Bangladeshi taka (BDT) or US
+  dollars (USD). A 15-day free trial applies where shown on the plan.
+- **ReckonERP** is the suite: ReckonBooks and Reckon HRMS (and Reckon CRM) in one subscription and one invoice, with
+  biometric attendance, the mobile app and app-based geo check-in; the top plan also includes Sales AI Agent.
+  Assets and project management are available on request. AI and channel usage is billed separately.
+- Compare plans at `/pricing`; each product has a page at `/modules/<product>`.
+
+## Signup and first login
+
+Signup (`/reckonerp-signup`) asks for company, owner details and the plan (choose the module or suite, currency and
+billing cycle). The owner becomes the company's first user and **Company Admin**. After signup open the product from
+the Apps screen; the Home page of each product guides the first steps.
+
+## Subscription page (`/reckonerp-subscription`)
+
+Top card: the company name and whether operational access is enabled. Tabs: **Plans and billing** (each subscription,
+its price and renewal), **Invoices**, **Add a module**, **Setup**. Pay by card (renews automatically) or, where
+offered, report a bank transfer or mobile-wallet payment with its reference for verification. Manage or cancel a
+card subscription from the same page. Workspace access unlocks when payment succeeds or a manual payment is
+verified; during a grace period or after a failed payment the workspace may lock until payment is made.
+
+## Team and access (`/reckonerp-team` and the product's Team and Access page)
+
+Company Admins add people, give each a **role profile** per product (for example Company Admin, Company Manager,
+Accountant, Sales User, Purchase User, Stock User in ReckonBooks), switch access on or off, and change a person's
+modules. Choose the narrowest profile that lets the person do the job. New users start with the standard list, form
+and report preferences switched on and the company as their default.
+
+## Common problems and fixes
+
+- **"X is not available in your workspace":** the product or page is not in the subscription or the person's profile.
+- **Locked workspace after payment:** open the Subscription page; if a manual payment is pending, add the reference;
+  card payments unlock on success.
+- **A user cannot see a product:** check the person's modules on Team and Access and the company's subscription.
+- **Want another product:** Subscription > Add a module, or ask support for assets and projects.
+- **Invoice or receipt needed:** Subscription > Invoices (PDF).
+- **Cannot change the company name or details:** the company record is managed by Reckon; ask support.
+
+## Copilot ideas
+
+Compare plans for a business size and currency, explain what a subscription includes, plan which staff get which
+role profile, draft a request to add a module.
+
+## Autopilot limits
+
+Aura cannot pay, subscribe or change access. It explains, compares and drafts; the company admin acts.
+
+## Prompts to try
+
+- Which ReckonERP plan fits a 20-person trading company?
+- How do I add a user and choose their access?
+- How do I pay by card, and what happens at renewal?
+- How do I add Reckon CRM or Sales AI Agent to my subscription?
+- What does my subscription include?
+- Why is my workspace locked and how do I unlock it?
+- How do I download an invoice?
+- How should I split access between accounts, sales and stock staff?
+
+## Prompts to try (Bangla)
+
+- ২০ জনের ব্যবসার জন্য কোন ReckonERP প্ল্যান ঠিক হবে?
+- নতুন ব্যবহারকারী যোগ করে অ্যাক্সেস কীভাবে দেব?
+- আমার সাবস্ক্রিপশনে কী কী আছে?

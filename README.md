@@ -1,4 +1,6 @@
-# ReckonERP Theme
+# Reckon Aura AI
+
+_The ReckonERP desk theme and Ask Aura AI assistant. The installable app and its settings keep the names `reckon_aura_theme` and **Aura Theme Settings**._
 
 **ReckonERP, powered by Frappe** — an AI-first desk theme for **Frappe / ERPNext v16+**. The installable app remains `reckon_aura_theme`.
 Frosted-glass surfaces over a violet → cyan aurora, Sora headings over Geist, dark-first with a full light mode, and AI built into the layout.
@@ -58,7 +60,7 @@ reckon_aura_theme/
 ├─ boot.py                      frappe.boot.aura (public config only)
 ├─ install.py                   seeds settings defaults
 ├─ api.py                       get_brief · ask · extract_document · test_connection · get_login_config
-├─ skills/                       route-selected module support guides with source links
+├─ skills/                       support guides per ReckonERP product + the Aura playbook (see skills/README.md); also the source of the random prompts on the Ask Aura AI welcome
 ├─ reckon_aura_theme/doctype/aura_theme_settings/   Single DocType
 └─ public/
    ├─ css/aura_desk.css         tokens + desk skin + Aura UI

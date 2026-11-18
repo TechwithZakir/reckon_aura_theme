@@ -1,5 +1,8 @@
 # HR and payroll support guide
 
+> **ReckonERP customers use Reckon HRMS** with HR Studio and Payroll Studio. Its flows and fixes are in the Reckon HRMS
+> guide; this guide covers standard Frappe HR concepts.
+
 Frappe HR (formerly HRMS) is a separate app from ERPNext. Confirm that it is
 installed and that the user's role permits access before describing a page or
 workflow as available. HR and payroll rules also depend on local law and

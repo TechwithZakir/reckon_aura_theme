@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Reckon Aura Theme — Aurora Glass for Frappe / ERPNext v16 desk
+   Reckon Aura AI — Aurora Glass for Frappe / ERPNext v16 desk
    1. Fonts  2. Aura tokens (light / dark / accents / density)
    3. Frappe token map  4. Shell  5. Components  6. Views
    7. Aura UI (toolbar, Ask panel, brief)  8. Responsive
@@ -795,6 +795,10 @@ body.aura-ask-page-reflow {
 	font-size: 12.5px;
 	cursor: pointer;
 }
+.aura-more-ideas {
+	margin-top: 10px; background: none; border: 0; color: var(--aura-text-dim, var(--aura-text)); font-size: 12px; cursor: pointer; opacity: .8;
+}
+.aura-more-ideas:hover { opacity: 1; color: var(--aura-accent); text-decoration: underline; }
 .aura-chip:hover { color: var(--aura-text); border-color: var(--aura-accent); background: var(--aura-accent-soft); }
 .aura-chat-turn { max-width: 100%; }
 .aura-chat-turn--user { display: flex; justify-content: flex-end; }

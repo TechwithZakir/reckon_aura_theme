@@ -1,4 +1,4 @@
-/* Reckon Aura Theme — desk runtime for Frappe / ERPNext v16
+/* Reckon Aura AI — desk runtime for Frappe / ERPNext v16
  * - applies site + per-browser theme prefs (accent, density)
  * - navbar tools: Aura AI, density, accent, light/dark
  * - Aura AI chat (Ctrl/⌘+J): multi-turn ERP support with voice input and page jumps
@@ -305,6 +305,7 @@
 			else if (action === "new-chat") aura.new_ask_chat();
 			else if (action === "voice") aura.toggle_ask_voice();
 			else if (action === "send") aura.submit_ask();
+			else if (action === "more-ideas") aura.load_prompt_chips();
 			else if (action === "close") aura.close_ask();
 		});
 		aura.$ask.on("click", ".aura-chip", function () {
@@ -365,9 +366,29 @@
 			<div class="aura-ask-welcome">
 				<span class="aura-ask-welcome-icon">✦</span>
 				<h2>${__("How can I help with {0}?", [brand])}</h2>
-				<p>${__("Ask about ERPNext features, workflows, or what to do next.")}</p>
+				<p>${__("Ask about your ReckonERP products, errors, workflows, or what to do next.")}</p>
 				<div class="aura-ask-chips">${CHIPS.map((c) => `<button type="button" class="aura-chip">${esc(c)}</button>`).join("")}</div>
+				<button type="button" class="aura-more-ideas" data-aura-ask-action="more-ideas">${__("Show other ideas")}</button>
 			</div>`);
+		aura.load_prompt_chips();
+	};
+
+	/* Ideas worth asking, picked at random from the guides of the product on screen (and a few from the others). */
+	aura.load_prompt_chips = function () {
+		if (!aura.$ask) return;
+		const route = frappe.get_route_str ? frappe.get_route_str() : "";
+		frappe
+			.xcall("reckon_aura_theme.api.get_prompts", { route, count: 4 })
+			.then((rows) => {
+				const $box = aura.$ask && aura.$ask.find(".aura-ask-chips");
+				if (!$box || !$box.length || !rows || !rows.length) return;
+				$box.html(
+					rows
+						.map((r) => `<button type="button" class="aura-chip" title="${esc(r.module)}">${esc(r.text)}</button>`)
+						.join(""),
+				);
+			})
+			.catch(() => {}); // the built-in ideas stay when the call fails
 	};
 
 	aura.render_ask_message = function (role, content, state) {
@@ -556,7 +577,7 @@
 			aura.render_jumps(q);
 			aura.render_ask_message(
 				"assistant",
-				__("AI answers are not set up yet. A System Manager can add a model and API key in Aura Theme Settings."),
+				__("AI answers are not set up yet. A System Manager can add a model and API key in Reckon Aura AI settings (Aura Theme Settings)."),
 				"note"
 			);
 			return;

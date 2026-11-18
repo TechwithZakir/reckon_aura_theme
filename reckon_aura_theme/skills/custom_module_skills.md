@@ -22,3 +22,9 @@ When a user asks about a custom feature:
 Never ask for passwords, API keys, or unrestricted production data. Do not
 claim that the assistant can inspect or change custom records unless a
 permission-checked integration explicitly provides that ability.
+
+## ReckonERP's own modules (documented, so do not ask for documentation)
+
+These have their own guides: **ReckonBooks** (accounting, sales, purchase, inventory, stock), **Reckon HRMS**, **Reckon CRM**,
+**Sales AI Agent**, **Distribution**, **Retail Loyalty**, and the **account, subscription and team** pages. Use the matching
+guide. Only ask for the app name and documentation when the question is about some other custom app.

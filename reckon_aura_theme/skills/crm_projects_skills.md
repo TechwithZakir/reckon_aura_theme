@@ -1,5 +1,8 @@
 # CRM and Projects support guide
 
+> **ReckonERP customers use Reckon CRM** (leads, deals, field visits) and Sales AI Agent; see their guides. Asset and project
+> management are available on request and are not part of the standard plans today.
+
 ERPNext CRM records and the separate Frappe CRM app are related but are not
 the same product or workflow. Check which app is installed and which page the
 user is viewing before giving menu instructions.

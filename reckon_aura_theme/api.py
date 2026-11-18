@@ -27,6 +27,7 @@ BRAND_LOGO = "/assets/reckon_aura_theme/images/reckonerp-logo.webp"
 POWERED_BY = "Powered by Frappe"
 OWNER = "Reckon Technologies Ltd."
 SKILLS_DIR = Path(__file__).resolve().parent / "skills"
+PLAYBOOK_FILE = "aura_playbook_skills.md"  # attached to every question: helpdesk, copilot, autopilot, prompt guidelines
 MAX_SKILL_CHARACTERS = 16000
 DEFAULT_DAILY_ASK_LIMIT = 10
 MAX_FILL_FILE_BYTES = 5 * 1024 * 1024
@@ -82,6 +83,125 @@ EXTRACT_PROMPT = (
 )
 
 SKILL_GUIDES = (
+	# ReckonERP's own products come first, so a route inside one of them selects its guide before the generic ERPNext one.
+	{
+		"id": "reckonbooks",
+		"title": "ReckonBooks",
+		"file": "reckonbooks_skills.md",
+		"routes": ("accounts-saas", "accounts-home", "voucher-entry", "accounts-dashboard", "accounts-team"),
+		"markers": (
+			"reckonbooks",
+			"reckon books",
+			"voucher entry",
+			"tally",
+			"office expense",
+			"sales register",
+			"purchase register",
+			"day book",
+			"cash book",
+			"party ledger",
+			"রেকনবুকস",
+			"ভাউচার",
+		),
+	},
+	{
+		"id": "reckon_hrms",
+		"title": "Reckon HRMS",
+		"file": "reckon_hrms_skills.md",
+		"routes": ("reckon-hrms", "hr-studio", "payroll-studio"),
+		"markers": (
+			"reckon hrms",
+			"hr studio",
+			"payroll studio",
+			"payroll run",
+			"holiday list assignment",
+			"structure assignment",
+			"biometric",
+			"check-in",
+			"বায়োমেট্রিক",
+		),
+	},
+	{
+		"id": "distribution",
+		"title": "Distribution",
+		"file": "distribution_skills.md",
+		"routes": ("distribution", "dsr-", "sr-order", "outlet-visit", "van-loading"),
+		"markers": (
+			"distribution",
+			"dsr",
+			"sr order",
+			"day settlement",
+			"challan",
+			"retailer",
+			"outlet visit",
+			"van loading",
+			"fmcg",
+			"ডিএসআর",
+			"রিটেইলার",
+			"পরিবেশক",
+		),
+	},
+	{
+		"id": "reckon_crm",
+		"title": "Reckon CRM",
+		"file": "reckon_crm_skills.md",
+		"routes": ("reckon-crm", "crm-lead", "crm-deal", "crm-organization", "crm-field-visit"),
+		"markers": ("reckon crm", "field visit", "field sales", "geofence", "ফিল্ড ভিজিট"),
+	},
+	{
+		"id": "sales_agent",
+		"title": "Sales AI Agent",
+		"file": "sales_agent_skills.md",
+		"routes": (
+			"sales-agent",
+			"sales-setup",
+			"sales-inbox",
+			"lead-finder",
+			"campaign-studio",
+			"capture-studio",
+			"automation-studio",
+			"sales-review",
+			"sales-prospect",
+			"sales-campaign",
+		),
+		"markers": (
+			"sales agent",
+			"sales ai agent",
+			"campaign",
+			"prospect",
+			"discovery",
+			"targeting profile",
+			"suppression",
+			"autonomous agent",
+			"ক্যাম্পেইন",
+			"টার্গেটিং",
+		),
+	},
+	{
+		"id": "account_platform",
+		"title": "Account, subscription and team",
+		"file": "account_platform_skills.md",
+		"routes": ("reckonerp-subscription", "reckonerp-team"),
+		"markers": (
+			"subscription",
+			"my plan",
+			"pricing",
+			"free trial",
+			"add a module",
+			"team and access",
+			"role profile",
+			"locked workspace",
+			"সাবস্ক্রিপশন",
+			"প্ল্যান",
+		),
+	},
+	{
+		"id": "retail_loyalty",
+		"title": "Retail Loyalty",
+		"file": "retail_loyalty_skills.md",
+		"routes": ("loyalty", "retail-loyalty"),
+		"markers": ("loyalty", "membership", "reward points", "pos integration", "লয়্যালটি"),
+	},
 	{
 		"id": "accounts",
 		"title": "Accounts",
@@ -741,6 +861,79 @@ def _get_support_skills(question, route):
 	return skills
 
 
+def _get_playbook():
+	try:
+		return (SKILLS_DIR / PLAYBOOK_FILE).read_text(encoding="utf-8")
+	except OSError as e:
+		frappe.log_error(f"Could not read {PLAYBOOK_FILE}: {e}", "Aura AI skill unavailable")
+		return ""
+
+
+_PROMPT_CACHE = {}
+
+
+def _parse_prompts(content, bangla=False):
+	"""The bullets under ``## Prompts to try`` (or ``## Prompts to try (Bangla)``) in a guide."""
+	heading = "## prompts to try (bangla)" if bangla else "## prompts to try"
+	prompts, inside = [], False
+	for line in content.splitlines():
+		text = line.strip()
+		if text.startswith("## "):
+			inside = text.casefold() == heading
+			continue
+		if inside and text.startswith("- ") and len(text) > 2:
+			prompts.append(text[2:].strip())
+	return prompts
+
+
+def _guide_prompts(file, bangla=False):
+	path = SKILLS_DIR / file
+	try:
+		stamp = path.stat().st_mtime
+		cached = _PROMPT_CACHE.get((file, bangla))
+		if cached and cached[0] == stamp:
+			return cached[1]
+		prompts = _parse_prompts(path.read_text(encoding="utf-8"), bangla)
+	except OSError:
+		return []
+	_PROMPT_CACHE[(file, bangla)] = (stamp, prompts)
+	return prompts
+
+
+@frappe.whitelist(methods=["GET"])
+def get_prompts(route=None, count=4):
+	"""A few prompts to try, shown on the Ask Aura AI welcome: mostly from the product being used, plus others.
+
+	Random on every call, so people keep discovering what Aura AI can help with.
+	"""
+	import random
+
+	_require_desk_user()
+	count = max(1, min(cint(count) or 4, 8))
+	bangla = str(getattr(getattr(frappe, "local", None), "lang", "") or "").startswith("bn")
+
+	def pool(file):
+		return _guide_prompts(file, bangla=True) if bangla and _guide_prompts(file, bangla=True) else _guide_prompts(file)
+
+	routed = _select_skill_guides("", route)[:1]
+	own = [{"text": text, "module": routed[0]["title"]} for text in pool(routed[0]["file"])] if routed else []
+	picked = random.sample(own, min(len(own), max(1, (count * 3 + 3) // 4))) if own else []
+
+	others = [guide for guide in SKILL_GUIDES if not routed or guide["id"] != routed[0]["id"]]
+	random.shuffle(others)
+	for guide in others:
+		if len(picked) >= count:
+			break
+		options = pool(guide["file"])
+		if options:
+			picked.append({"text": random.choice(options), "module": guide["title"]})
+	if len(picked) < count:
+		for text in random.sample(pool(PLAYBOOK_FILE), min(count - len(picked), len(pool(PLAYBOOK_FILE)))):
+			picked.append({"text": text, "module": "Aura AI"})
+	random.shuffle(picked)
+	return picked[:count]
+
+
 def _ask_system_prompt(s):
 	custom_prompt = (s.ai_system_prompt or "").strip()
 	return "\n\n".join((custom_prompt or DEFAULT_PROMPT, SUPPORT_INSTRUCTIONS))
@@ -816,7 +1009,11 @@ def ask(question, route=None, history=None):
 		"records": _ask_records(),
 	}
 	skills = _get_support_skills(question, route)
-	skill_context = "".join(
+	playbook = _get_playbook()
+	playbook_context = (
+		f"\n\nAura AI playbook (how to help):\n<playbook>\n{playbook}\n</playbook>" if playbook else ""
+	)
+	skill_context = playbook_context + "".join(
 		f"\n\nRelevant {guide['title']} support guide:\n"
 		f'<support_guide module="{guide["id"]}">\n'
 		f"{content}\n"

@@ -11,9 +11,9 @@ def _asset_version(*parts):
 
 
 app_name = "reckon_aura_theme"
-app_title = "ReckonERP Theme"
+app_title = "Reckon Aura AI"
 app_publisher = "TechwithZakir"
-app_description = "ReckonERP theme for Frappe / ERPNext v16"
+app_description = "Reckon Aura AI: the ReckonERP desk theme, one-stop helpdesk, copilot and autopilot assistant"
 app_email = "admin@example.com"
 app_license = "mit"
 app_version = "0.1.0"

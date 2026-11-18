@@ -1,4 +1,4 @@
-/* Reckon Aura Theme — auth page hero (login / update-password). */
+/* Reckon Aura AI — auth page hero (login / update-password). */
 (function () {
 	"use strict";
 	const path = document.body && document.body.getAttribute("data-path");
