@@ -53,6 +53,17 @@ role profile, draft a request to add a module.
 
 Aura cannot pay, subscribe or change access. It explains, compares and drafts; the company admin acts.
 
+## Links
+
+Menu names that become links in Ask Aura AI answers (label | address). Keep these in step with the menus.
+
+- Subscription page | /reckonerp-subscription
+- Subscription | /reckonerp-subscription
+- Team and Access | /reckonerp-team
+- Plans and pricing | /pricing
+- ReckonERP plan | /modules/reckonerp
+- Signup | /reckonerp-signup
+
 ## Prompts to try
 
 - Which ReckonERP plan fits a 20-person trading company?

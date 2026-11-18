@@ -57,6 +57,27 @@ approval; add reply handling; schedule discovery weekly; review analytics monthl
 Write a Targeting Profile from a description of the business (in English and Bangla terms), draft campaign steps and
 subject lines, review why a prospect scored low, summarise a conversation, suggest the next message.
 
+## Links
+
+Menu names that become links in Ask Aura AI answers (label | address). Keep these in step with the menus.
+
+- Sales AI Agent | /desk/sales-agent
+- Agent Studio | /desk/sales-agent
+- Setup | /desk/sales-agent/sales-setup
+- Inbox | /desk/sales-agent/sales-inbox
+- Meetings | /desk/sales-agent/sales-meetings
+- Lead Finder | /desk/sales-agent/lead-finder
+- Prospect Review | /desk/sales-agent/sales-review
+- Campaign Studio | /desk/sales-agent/campaign-studio
+- Capture Studio | /desk/sales-agent/capture-studio
+- Automation Studio | /desk/sales-agent/automation-studio
+- Templates | /desk/sales-agent/sales-templates
+- Campaign Analytics | /desk/sales-agent/sales-analytics
+- Integrations | /desk/sales-agent/sales-channels
+- Agent Settings | /desk/sales-agent/sales-agent-settings
+- Targeting Profile | /desk/sales-agent/sales-targeting-profile
+- Prospects | /desk/sales-agent/sales-prospect
+
 ## Prompts to try
 
 - Help me write a Targeting Profile for my business.

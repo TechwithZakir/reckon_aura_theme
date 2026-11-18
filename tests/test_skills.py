@@ -111,3 +111,42 @@ class PromptTests(unittest.TestCase):
     def test_count_is_bounded(self):
         self.assertEqual(len(self.api.get_prompts("", 99)), 8)
         self.assertEqual(len(self.api.get_prompts("", 0)), 4)
+
+
+class LinkTests(unittest.TestCase):
+    def setUp(self):
+        self.api, self.frappe, _cache = support.load_api()
+        patcher = patch.object(self.api, "_require_desk_user")
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_product_guides_list_the_pages_their_answers_name(self):
+        for guide_id, file in PRODUCT_GUIDES.items():
+            if guide_id == "retail_loyalty":
+                continue  # its screens are not documented in this repository yet
+            with self.subTest(guide=guide_id):
+                links = self.api._guide_links(file)
+                self.assertGreaterEqual(len(links), 5)
+                for label, url in links:
+                    self.assertTrue(label.strip())
+                    self.assertTrue((url.startswith("/") and not url.startswith("//")) or url.startswith("https://"), url)
+
+    def test_the_current_products_names_win_a_tie(self):
+        books = {r["label"]: r for r in self.api.get_links("accounts-saas/sales-invoice")}
+        hrms = {r["label"]: r for r in self.api.get_links("reckon-hrms/reckon-hrms-hr-studio")}
+        self.assertEqual(books["Dashboard"]["module"] != "", True)
+        self.assertEqual(hrms["Dashboard"]["url"], "/desk/reckon-hrms/reckon-hrms-home")
+        self.assertEqual(books["Team and Access"]["url"], "/desk/accounts-saas/accounts-team")
+        self.assertEqual(hrms["Shift Type"]["url"], "/desk/reckon-hrms/shift-type")
+
+    def test_unsafe_addresses_are_ignored(self):
+        text = "## Links\n\n- Good | /desk/employee\n- Bad | javascript:alert(1)\n- Protocol | //evil.test/x\n- Plain | http://x.test\n"
+        self.assertEqual(self.api._parse_links(text), [("Good", "/desk/employee")])
+
+    def test_the_prompt_tells_the_model_to_use_listed_names(self):
+        self.assertIn("Links list", self.api.SUPPORT_INSTRUCTIONS)
+
+    def test_the_panel_turns_answers_into_html_and_links_names_in_new_tabs(self):
+        js = (HERE.parent / "reckon_aura_theme" / "public" / "js" / "aura_desk.js").read_text(encoding="utf-8")
+        for needle in ('target = "_blank"', "noopener noreferrer", "reckon_aura_theme.api.get_links", "aura.autolink", "aura-table"):
+            self.assertIn(needle, js)

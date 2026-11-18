@@ -68,6 +68,44 @@ reports for a monthly HR review, prepare a payroll run checklist, translate a po
 Aura does not run payroll. The Studio's batch steps (draft slips, approve) run after a person clicks. Schedule a
 monthly reminder for the payroll checklist; keep approval and payment with HR and accounts.
 
+## Links
+
+Menu names that become links in Ask Aura AI answers (label | address). Keep these in step with the menus.
+
+- Reckon HRMS | /desk/reckon-hrms
+- HR Studio | /desk/reckon-hrms/reckon-hrms-hr-studio
+- Payroll Studio | /desk/reckon-hrms/reckon-hrms-setup
+- Dashboard | /desk/reckon-hrms/reckon-hrms-home
+- Employee | /desk/reckon-hrms/employee
+- Department | /desk/reckon-hrms/department
+- Designation | /desk/reckon-hrms/designation
+- Branch | /desk/reckon-hrms/branch
+- Employment Type | /desk/reckon-hrms/employment-type
+- Employee Grade | /desk/reckon-hrms/employee-grade
+- Exit Interview | /desk/reckon-hrms/exit-interview
+- Check in/out | /desk/reckon-hrms/reckon-hrms-checkin
+- Time and Attendance | /desk/reckon-hrms/attendance
+- Attendance | /desk/reckon-hrms/attendance
+- Biometric Devices | /desk/reckon-hrms/hrms-attendance-device
+- Shift Type | /desk/reckon-hrms/shift-type
+- Shift Assignment | /desk/reckon-hrms/shift-assignment
+- Holiday List Assignment | /desk/reckon-hrms/holiday-list-assignment
+- Holiday List | /desk/reckon-hrms/holiday-list
+- Leave Application | /desk/reckon-hrms/leave-application
+- Leave Type | /desk/reckon-hrms/leave-type
+- Leave Allocation | /desk/reckon-hrms/leave-allocation
+- Leave Policy Assignment | /desk/reckon-hrms/leave-policy-assignment
+- Leave Ledger Entry | /desk/reckon-hrms/leave-ledger-entry
+- Expense Claim | /desk/reckon-hrms/expense-claim
+- Payroll Entry | /desk/reckon-hrms/payroll-entry
+- Salary Slip | /desk/reckon-hrms/salary-slip
+- Salary Structure Assignment | /desk/reckon-hrms/salary-structure-assignment
+- Salary Structure | /desk/reckon-hrms/salary-structure
+- Salary Component | /desk/reckon-hrms/salary-component
+- Additional Salary | /desk/reckon-hrms/additional-salary
+- Income Tax Slab | /desk/reckon-hrms/income-tax-slab
+- Salary Register | /desk/reckon-hrms/query-report/Salary Register
+
 ## Prompts to try
 
 - How do I run this month's salary in Payroll Studio, step by step?

@@ -71,7 +71,10 @@ SUPPORT_INSTRUCTIONS = (
 	"them in the user's language. For standard ERPNext behavior, the official ERPNext guide is "
 	"authoritative. Reckon Accounts notes are product-specific context, not a replacement for "
 	"ERPNext accounting. Do not assume a custom app or feature is installed; say when availability "
-	"depends on the site's version, configuration, or permissions. Do not claim to perform actions."
+	"depends on the site's version, configuration, or permissions. Do not claim to perform actions. "
+	"When you mention a page, report or menu item, write its name exactly as in the guide's Links list (for example "
+	"**Shift Type**), so it becomes a link the user can open in a new tab. If you write a link yourself, use only an "
+	"address from a Links list; never invent addresses."
 )
 
 EXTRACT_PROMPT = (
@@ -908,6 +911,55 @@ def _guide_prompts(file, bangla=False):
 		return []
 	_PROMPT_CACHE[(file, bangla)] = (stamp, prompts)
 	return prompts
+
+
+_LINK_CACHE = {}
+
+
+def _parse_links(content):
+	"""``- Label | /address`` bullets under ``## Links``: the names Ask Aura AI turns into links."""
+	links, inside = [], False
+	for line in content.splitlines():
+		text = line.strip()
+		if text.startswith("## "):
+			inside = text.casefold() == "## links"
+			continue
+		if inside and text.startswith("- ") and "|" in text:
+			label, _sep, url = text[2:].partition("|")
+			label, url = label.strip(), url.strip()
+			if label and ((url.startswith("/") and not url.startswith("//")) or url.startswith("https://")):
+				links.append((label, url))
+	return links
+
+
+def _guide_links(file):
+	path = SKILLS_DIR / file
+	try:
+		stamp = path.stat().st_mtime
+		cached = _LINK_CACHE.get(file)
+		if cached and cached[0] == stamp:
+			return cached[1]
+		links = _parse_links(path.read_text(encoding="utf-8"))
+	except OSError:
+		return []
+	_LINK_CACHE[file] = (stamp, links)
+	return links
+
+
+@frappe.whitelist(methods=["GET"])
+def get_links(route=None):
+	"""Menu names and where they open, for turning names in an answer into links (the current product's win ties)."""
+	_require_desk_user()
+	routed = _select_skill_guides("", route)[:1]
+	guides = routed + [g for g in SKILL_GUIDES if not routed or g["id"] != routed[0]["id"]]
+	seen, rows = set(), []
+	for guide in guides:
+		for label, url in _guide_links(guide["file"]):
+			if label.casefold() in seen:
+				continue
+			seen.add(label.casefold())
+			rows.append({"label": label, "url": url, "module": guide["title"]})
+	return rows
 
 
 @frappe.whitelist(methods=["GET"])

@@ -23,13 +23,14 @@ product really does today. **Whenever a ReckonERP module is built or changed, up
 - A new error message or a rule users trip over: add it under "Common problems and fixes" with the exact text.
 - A rule about company separation, access or billing changed: update that section.
 - A new automation or AI feature: update "Copilot ideas" and "Autopilot limits".
+- A new or renamed page, report or menu item: add or change its line under `## Links` (`- Label | /address`). Ask Aura AI turns those names in answers into links that open in a new tab, so a wrong address sends users to the wrong page.
 - Always add or refresh two or three prompts under "Prompts to try" (and the Bangla list): these are what people see
   on the Ask Aura AI welcome, so make them questions a real user would ask.
 
 ## How to add a new product
 
 1. Write `<product>_skills.md` with these headings: what it is, where things are, flows, common problems and fixes,
-   company separation, copilot ideas, autopilot limits, `## Prompts to try` (6+) and `## Prompts to try (Bangla)` (2+).
+   company separation, copilot ideas, autopilot limits, `## Links` (menu names and addresses), `## Prompts to try` (6+) and `## Prompts to try (Bangla)` (2+).
 2. Register it in `SKILL_GUIDES` in `api.py` (id, title, file, `routes` that appear in the Desk address, `markers`
    words people use). Put product guides before the generic ERPNext ones.
 3. Add the product to `PRODUCT_GUIDES` in `tests/test_skills.py`.

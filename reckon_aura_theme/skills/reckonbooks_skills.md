@@ -71,6 +71,48 @@ posted voucher.
 ReckonBooks does not post by itself. Suggest saved report filters, recurring reminders for overdue invoices (draft a
 Bangla message), and a checklist the owner runs weekly. Payments and submits stay with a person.
 
+## Links
+
+Menu names that become links in Ask Aura AI answers (label | address). Keep these in step with the menus.
+
+- ReckonBooks | /desk/accounts-saas/accounts-home
+- Sales Invoices | /desk/sales-invoice
+- Sales Invoice | /desk/sales-invoice
+- Quotations | /desk/quotation
+- Sales Orders | /desk/sales-order
+- Delivery Notes | /desk/delivery-note
+- Customers | /desk/customer
+- Purchase Bills | /desk/purchase-invoice
+- Purchase Orders | /desk/purchase-order
+- Goods Received | /desk/purchase-receipt
+- Suppliers | /desk/supplier
+- Payments | /desk/payment-entry
+- Payment Entry | /desk/payment-entry
+- Voucher Entry | /desk/accounts-saas/voucher-entry
+- Office Expenses | /desk/office-expense
+- Office Expense Setup | /desk/office-expense-settings
+- Journal Entries | /desk/journal-entry
+- Chart of Accounts | /desk/account
+- Items | /desk/item
+- Stock Entries | /desk/stock-entry
+- Stock Count | /desk/stock-reconciliation
+- Warehouses | /desk/warehouse
+- Price Lists | /desk/price-list
+- Team and Access | /desk/accounts-saas/accounts-team
+- Accounts Dashboard | /desk/accounts-saas/accounts-dashboard
+- Stock Balance | /desk/query-report/Stock Balance
+- Day Book | /desk/query-report/Day Book
+- Cash Book | /desk/query-report/Cash Book
+- Party Ledger | /desk/query-report/Party Ledger
+- Accounts Receivable | /desk/query-report/Accounts Receivable
+- Accounts Payable | /desk/query-report/Accounts Payable
+- Sales Register | /desk/query-report/Sales Register
+- Purchase Register | /desk/query-report/Purchase Register
+- Gross Profit | /desk/query-report/Gross Profit
+- Profit and Loss | /desk/query-report/Profit and Loss Statement
+- Balance Sheet | /desk/query-report/Balance Sheet
+- Trial Balance | /desk/query-report/Trial Balance
+
 ## Prompts to try
 
 - Show me, step by step, how to raise a sales invoice and record the customer's payment.

@@ -48,6 +48,21 @@ plan a day of field visits, write a call script.
 Sales AI Agent can create leads, score them, create follow-up tasks and raise deal probability; messages to outside
 people still wait for approval. Aura suggests; people confirm.
 
+## Links
+
+Menu names that become links in Ask Aura AI answers (label | address). Keep these in step with the menus.
+
+- Reckon CRM | /crm
+- Dashboard | /crm/dashboard
+- Leads | /crm/leads
+- Deals | /crm/deals
+- Contacts | /crm/contacts
+- Organizations | /crm/organizations
+- Notes | /crm/notes
+- Tasks | /crm/tasks
+- Call Logs | /crm/call-logs
+- Field Visits | /crm/visits
+
 ## Prompts to try
 
 - How do I turn a lead into a deal?

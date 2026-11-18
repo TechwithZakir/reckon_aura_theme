@@ -53,6 +53,25 @@ suggest a reorder from stock and sales, outline a new route plan.
 Aura does not post deliveries or settlements. It can prepare a checklist for each role (SR, DSR, store, accounts)
 and the reports to review daily.
 
+## Links
+
+Menu names that become links in Ask Aura AI answers (label | address). Keep these in step with the menus.
+
+- Distribution | /desk/distribution
+- Distribution Home | /desk/distribution
+- SR Sales | /desk/sr-order
+- SR Order | /desk/sr-order
+- DSR Challan | /desk/dsr-challan
+- DSR Day Settlement | /desk/dsr-day-settlement
+- Outlet Visit | /desk/outlet-visit
+- Van Loading Acknowledgement | /desk/van-loading-acknowledgement
+- Distribution Route | /desk/distribution-route
+- Return Inspection | /desk/return-inspection
+- Stock Ledger | /desk/query-report/Stock Ledger
+- DSR Wise Ledger | /desk/query-report/DSR Wise Ledger
+- Supplier Aging | /desk/query-report/Supplier Aging Report
+- Customer Aging | /desk/query-report/Customer Aging Report
+
 ## Prompts to try
 
 - How does a DSR settle the day, step by step?

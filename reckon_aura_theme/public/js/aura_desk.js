@@ -371,6 +371,7 @@
 				<button type="button" class="aura-more-ideas" data-aura-ask-action="more-ideas">${__("Show other ideas")}</button>
 			</div>`);
 		aura.load_prompt_chips();
+		aura.load_links();
 	};
 
 	/* Ideas worth asking, picked at random from the guides of the product on screen (and a few from the others). */
@@ -416,7 +417,7 @@
 			} else if (state === "note") {
 				$content.addClass("is-note").text(content);
 			} else {
-				$content.html(aura.format_answer(content));
+				aura.show_answer($content, content);
 			}
 		}
 
@@ -556,11 +557,113 @@
 			</div>`);
 	};
 
+	/* An answer as safe HTML: headings, bullet and numbered lists, tables, bold, code and [text](address) links. */
 	aura.format_answer = function (text) {
-		return esc(text)
-			.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-			.replace(/^\s*[-•]\s+(.+)$/gm, "• $1")
-			.replace(/\n/g, "<br>");
+		const safeUrl = (u) => /^\/(?!\/)/.test(u) || /^https:\/\//i.test(u);
+		const inline = (raw) => {
+			let t = esc(raw);
+			t = t.replace(/`([^`]+)`/g, "<code>$1</code>");
+			t = t.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+			t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, label, url) => {
+				const plain = url.replace(/&amp;/g, "&").trim();
+				return safeUrl(plain)
+					? `<a class="aura-link" href="${esc(encodeURI(plain))}" target="_blank" rel="noopener noreferrer">${label}</a>`
+					: label;
+			});
+			return t;
+		};
+		const lines = String(text || "").replace(/\r/g, "").split("\n");
+		const out = [];
+		let list = null;
+		let para = [];
+		const endList = () => { if (list) { out.push(`</${list}>`); list = null; } };
+		const endPara = () => { if (para.length) { out.push(`<p>${para.join("<br>")}</p>`); para = []; } };
+		const cells = (line) => line.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+		const isRule = (r) => r.every((c) => /^:?-{2,}:?$/.test(c));
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			if (!line.trim()) { endList(); endPara(); continue; }
+			if (/^\s*\|/.test(line)) {
+				endList(); endPara();
+				const rows = [];
+				while (i < lines.length && /^\s*\|/.test(lines[i])) { rows.push(cells(lines[i])); i++; }
+				i--;
+				const hasHead = rows.length > 1 && isRule(rows[1]);
+				const body = rows.filter((r) => !isRule(r));
+				const head = hasHead ? body.shift() : null;
+				out.push(
+					`<div class="aura-table-wrap"><table class="aura-table">${head ? `<thead><tr>${head.map((c) => `<th>${inline(c)}</th>`).join("")}</tr></thead>` : ""}` +
+						`<tbody>${body.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`,
+				);
+				continue;
+			}
+			let m = line.match(/^\s*#{1,4}\s+(.*)$/);
+			if (m) { endList(); endPara(); out.push(`<h4 class="aura-h">${inline(m[1])}</h4>`); continue; }
+			m = line.match(/^\s*[-•*]\s+(.*)$/);
+			if (m) { endPara(); if (list !== "ul") { endList(); out.push("<ul>"); list = "ul"; } out.push(`<li>${inline(m[1])}</li>`); continue; }
+			m = line.match(/^\s*\d+[.)]\s+(.*)$/);
+			if (m) { endPara(); if (list !== "ol") { endList(); out.push("<ol>"); list = "ol"; } out.push(`<li>${inline(m[1])}</li>`); continue; }
+			endList();
+			para.push(inline(line));
+		}
+		endList(); endPara();
+		return out.join("");
+	};
+
+	/* Names of pages and reports in the ReckonERP guides, so an answer's menu names open the page in a new tab. */
+	aura.link_rows = [];
+	aura.link_regex = null;
+	aura.load_links = function () {
+		const route = frappe.get_route_str ? frappe.get_route_str() : "";
+		return frappe
+			.xcall("reckon_aura_theme.api.get_links", { route }, "GET")
+			.then((rows) => {
+				aura.link_rows = (rows || []).slice().sort((a, b) => b.label.length - a.label.length);
+				const names = aura.link_rows.map((r) => r.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+				aura.link_regex = names.length ? new RegExp(`(?<![\\w/-])(${names.join("|")})(?![\\w-])`, "g") : null;
+			})
+			.catch(() => {});
+	};
+	aura.autolink = function ($root) {
+		if (!aura.link_regex || !$root || !$root.length) return;
+		const urlFor = {};
+		aura.link_rows.forEach((r) => { urlFor[r.label] = r.url; });
+		const seen = {};
+		const walker = document.createTreeWalker($root[0], NodeFilter.SHOW_TEXT);
+		const nodes = [];
+		while (walker.nextNode()) nodes.push(walker.currentNode);
+		nodes.forEach((node) => {
+			if (node.parentElement.closest("a, pre")) return;
+			const emphasised = !!node.parentElement.closest("strong, code, li, td, th, h4");
+			const text = node.nodeValue;
+			let last = 0;
+			let changed = false;
+			const frag = document.createDocumentFragment();
+			text.replace(aura.link_regex, (label, _g, offset) => {
+				const wordy = label.includes(" ") || label.length >= 10;
+				if (!(emphasised || wordy) || (seen[label] || 0) >= 2) return label;
+				seen[label] = (seen[label] || 0) + 1;
+				frag.appendChild(document.createTextNode(text.slice(last, offset)));
+				const a = document.createElement("a");
+				a.className = "aura-link";
+				a.href = encodeURI(urlFor[label]);
+				a.target = "_blank";
+				a.rel = "noopener noreferrer";
+				a.textContent = label;
+				frag.appendChild(a);
+				last = offset + label.length;
+				changed = true;
+				return label;
+			});
+			if (changed) {
+				frag.appendChild(document.createTextNode(text.slice(last)));
+				node.parentNode.replaceChild(frag, node);
+			}
+		});
+	};
+	aura.show_answer = function ($content, answer) {
+		$content.html(aura.format_answer(answer));
+		aura.autolink($content);
 	};
 
 	aura.submit_ask = function () {
@@ -596,7 +699,7 @@
 			})
 			.then((r) => {
 				const answer = (r && r.answer) || __("No answer.");
-				$answer.find(".aura-chat-content").html(aura.format_answer(answer));
+				aura.show_answer($answer.find(".aura-chat-content"), answer);
 				aura.ask_history = aura.ask_history.concat(
 					{ role: "user", content: q },
 					{ role: "assistant", content: answer }
