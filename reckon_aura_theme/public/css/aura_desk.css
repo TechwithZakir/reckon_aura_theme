@@ -1091,7 +1091,7 @@ body.aura-ask-page-reflow {
 
 /* One white container for every custom page of the Reckon apps (Home, Studios, Team and Access, dashboards). */
 .page-container.rk-page > .page-body {
-	background: var(--card-bg, #fff);
+	background: var(--fg-color, #fff);
 	border: 1px solid var(--border-color, #e5e7eb);
 	border-radius: 14px;
 	margin: 12px;
