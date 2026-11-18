@@ -1120,3 +1120,17 @@ body.aura-ask-page-reflow {
 }
 .page-head .page-actions .btn.btn-default svg,
 .page-head .page-actions .btn.btn-secondary svg { stroke: currentColor; }
+
+/* Frappe's newer top-bar buttons (es-button) take the same theme colours. */
+.page-head .page-actions .es-button:not([class*="primary"]):not([class*="danger"]) {
+	background: var(--aura-accent-soft);
+	color: var(--aura-accent-text);
+	border: 1px solid var(--aura-accent-tint);
+	font-weight: 500;
+}
+.page-head .page-actions .es-button:not([class*="primary"]):not([class*="danger"]) .es-button__label { color: inherit; }
+.page-head .page-actions .es-button:not([class*="primary"]):not([class*="danger"]):hover {
+	background: var(--aura-accent-tint);
+	color: var(--aura-accent-ink);
+	border-color: var(--aura-accent);
+}
