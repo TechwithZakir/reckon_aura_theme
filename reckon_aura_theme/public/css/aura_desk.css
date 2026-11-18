@@ -1101,3 +1101,22 @@ body.aura-ask-page-reflow {
 @media (max-width: 767px) {
 	.page-container.rk-page > .page-body { margin: 6px; border-radius: 10px; }
 }
+
+/* The buttons in the top bar of every page (Message Templates, Agent Studio, Help ...) follow the theme colour. */
+.page-head .page-actions .btn.btn-default,
+.page-head .page-actions .btn.btn-secondary,
+.page-head .page-actions .custom-actions .btn:not(.btn-primary) {
+	background: var(--aura-accent-soft);
+	color: var(--aura-accent-text);
+	border: 1px solid var(--aura-accent-tint);
+	font-weight: 500;
+}
+.page-head .page-actions .btn.btn-default:hover,
+.page-head .page-actions .btn.btn-secondary:hover,
+.page-head .page-actions .custom-actions .btn:not(.btn-primary):hover {
+	background: var(--aura-accent-tint);
+	color: var(--aura-accent-ink);
+	border-color: var(--aura-accent);
+}
+.page-head .page-actions .btn.btn-default svg,
+.page-head .page-actions .btn.btn-secondary svg { stroke: currentColor; }
