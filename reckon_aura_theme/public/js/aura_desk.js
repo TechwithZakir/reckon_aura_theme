@@ -378,7 +378,7 @@
 		if (!aura.$ask) return;
 		const route = frappe.get_route_str ? frappe.get_route_str() : "";
 		frappe
-			.xcall("reckon_aura_theme.api.get_prompts", { route, count: 4 })
+			.xcall("reckon_aura_theme.api.get_prompts", { route, count: 4 }, "GET")
 			.then((rows) => {
 				const $box = aura.$ask && aura.$ask.find(".aura-ask-chips");
 				if (!$box || !$box.length || !rows || !rows.length) return;
