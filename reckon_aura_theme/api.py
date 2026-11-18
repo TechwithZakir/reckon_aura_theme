@@ -549,8 +549,18 @@ def _due_soon_filters(scope, today):
 	}
 
 
+def _tenant_company():
+	"""The signed-in user's own company on a ReckonERP site (the platform's rule); ``None`` elsewhere."""
+	try:
+		from reckon_saas_platform.tenant_security import tenant_company_or_none
+
+		return tenant_company_or_none(frappe.session.user)
+	except Exception:  # the platform app is optional; never let it stop a question
+		return None
+
+
 def _company_currency():
-	company = frappe.defaults.get_user_default("Company")
+	company = _tenant_company() or frappe.defaults.get_user_default("Company")
 	if company:
 		return company, frappe.get_cached_value("Company", company, "default_currency")
 	return None, frappe.db.get_default("currency")
