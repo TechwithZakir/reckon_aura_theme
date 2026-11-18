@@ -597,6 +597,7 @@
 				);
 				continue;
 			}
+			if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) { endList(); endPara(); out.push('<hr class="aura-rule">'); continue; }
 			let m = line.match(/^\s*#{1,4}\s+(.*)$/);
 			if (m) { endList(); endPara(); out.push(`<h4 class="aura-h">${inline(m[1])}</h4>`); continue; }
 			m = line.match(/^\s*[-•*]\s+(.*)$/);

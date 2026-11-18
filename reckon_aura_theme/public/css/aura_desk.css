@@ -804,6 +804,7 @@ body.aura-ask-page-reflow {
 .aura-chat-content a.aura-link { color: var(--aura-accent); text-decoration: underline; text-underline-offset: 2px; font-weight: 600; cursor: pointer; }
 .aura-chat-content a.aura-link::after { content: " \2197"; font-size: .75em; opacity: .7; }
 .aura-chat-content a.aura-link:hover { text-decoration-thickness: 2px; }
+.aura-rule { border: 0; border-top: 1px solid var(--aura-border, rgba(127,127,127,.3)); margin: 10px 0; }
 .aura-table-wrap { overflow-x: auto; margin: 6px 0 10px; }
 .aura-table { border-collapse: collapse; width: 100%; font-size: 13px; }
 .aura-table th, .aura-table td { border: 1px solid var(--aura-border, rgba(127,127,127,.3)); padding: 6px 10px; text-align: left; vertical-align: top; }
