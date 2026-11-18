@@ -1088,3 +1088,16 @@ body.aura-ask-page-reflow {
 .aura-ask, .aura-ask * { pointer-events: auto; }
 .aura-ask-backdrop.is-docked { pointer-events: none; }
 .aura-ask-backdrop.is-docked .aura-ask, .aura-ask-backdrop.is-docked .aura-ask * { pointer-events: auto; }
+
+/* One white container for every custom page of the Reckon apps (Home, Studios, Team and Access, dashboards). */
+.page-container.rk-page > .page-body {
+	background: var(--card-bg, #fff);
+	border: 1px solid var(--border-color, #e5e7eb);
+	border-radius: 14px;
+	margin: 12px;
+	padding-bottom: 16px;
+	min-height: calc(100vh - 140px);
+}
+@media (max-width: 767px) {
+	.page-container.rk-page > .page-body { margin: 6px; border-radius: 10px; }
+}

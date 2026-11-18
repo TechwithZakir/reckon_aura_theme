@@ -1052,7 +1052,14 @@
 
 	/* ------------------------------------------------------------- boot */
 
+	// Every custom page of the Reckon apps sits in one white container (see .rk-page in the stylesheet).
+	aura.mark_pages = function () {
+		const names = new Set((frappe.boot && frappe.boot.reckon_pages) || []);
+		$(".page-container[data-page-route]").each((_, el) => $(el).toggleClass("rk-page", names.has(el.dataset.pageRoute)));
+	};
+
 	const on_route = frappe.utils.debounce(() => {
+		aura.mark_pages();
 		aura.mount_tools();
 		aura.mount_collapse();
 		aura.render_brief();
