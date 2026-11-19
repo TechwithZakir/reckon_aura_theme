@@ -24,6 +24,23 @@ Answer from the guides, turn menu names into links, show prompts, fill sales and
    only the named company's records, assert other companies are unchanged, write an audit row. Never offer it to
    non-admins.
 
+## Learned while setting up Reckon Technologies Ltd. (2026-11-19)
+
+- **One AI setup for Aura and the Sales Agent.** Aura Theme Settings holds provider type, address, model and key. The
+  type can be "Anthropic" with a custom address (an Anthropic-compatible service) and any model that service offers.
+  The Sales Agent platform settings now accept the same: provider "Anthropic (Claude)", an "Anthropic-compatible
+  address", a model and a key. A compatible address gets a plain request with the JSON schema in the instructions
+  (structured-output options are Anthropic-only). Copying values between the two is done on the server, never shown.
+- **A dead AI account looks like missing features.** When the AI account has no credit, agents fall back to rules and
+  produce poor results (a market brief that crosses every industry with every buyer type). Say so plainly, and a
+  setup agent should test the AI with one tiny request before starting a research job.
+- **Chip fields (business profile) only turn into chips when separated by commas or Enter.** One long item without a
+  comma is silently dropped; items containing commas are split. A form-filling tool must send one item at a time.
+- **Do not press Save and Research together.** Both save the profile; the second is refused as "modified after you have
+  opened it". Wait for the save, or let Research save by itself.
+- **A reset needs more than deleting rows.** Clear links in kept records that pointed at deleted ones (the profile's
+  latest brief), and expect agents to create new rows (a market brief) the moment a page opens.
+
 ## Hard rules for every agent tool
 
 - **Tenant isolation first.** Every query and write is limited to the signed-in person's Company. One company's data is
