@@ -2,13 +2,13 @@
 
 Sales AI Agent finds, researches, scores and follows up B2B customers, with a person approving anything sent
 outside. It works with Reckon CRM on the same company. AI and channel (SMS, WhatsApp, email provider) usage is billed
-separately from the subscription. Open it from the Apps screen (`/desk/sales-agent`).
+separately from the subscription. Open it from the Apps screen; it opens on Sales Analytics, the first item in the sidebar. The Campaign group holds Campaigns, Signup forms and lists, Automations, Message templates, Messages sent and the Do-not-contact list.
 
 ## Where things are (pages)
 
-Setup (Get started), Agent Studio (Home), Inbox (conversations and replies), Meetings, Lead Finder, Prospect Review,
-Campaign Studio, Capture Studio (forms and landing capture), Automation Studio (flows), Templates, Campaign
-Analytics, Integrations (Channels), Agent Settings. Records: Prospects, Segments, Audiences, Campaigns, Campaign
+Sales Analytics (the landing page, first in the sidebar), Setup (Get started), Agent Studio (Home), Inbox (conversations and replies), Meetings, Lead Finder, Prospect Review,
+Campaign Studio, Capture Studio (forms and landing capture), Automation Studio (flows), Templates,
+Integrations (Channels), Agent Settings. Records: Prospects, Segments, Audiences, Campaigns, Campaign
 Members, Targeting Profiles, Discovery Campaigns and Jobs, Research Reports, Qualification Profiles, Suppression
 list, Knowledge items, Social accounts and posts.
 
@@ -27,7 +27,7 @@ list, Knowledge items, Social accounts and posts.
    (campaign and each message); SMS and WhatsApp only go to people with recorded consent.
 7. **Replies:** classified (interested, meeting, question, not now, not interested, wrong person, unsubscribe,
    out of office); opt-outs are suppressed and sequences stop; positive replies create a task for the lead owner.
-8. **Learn:** Campaign Analytics by channel and step, with weekly AI insight built from aggregate numbers only.
+8. **Learn:** Sales Analytics by channel and step, with weekly AI insight built from aggregate numbers only.
 
 ## Safety rules (always explain)
 
@@ -72,6 +72,7 @@ Menu names that become links in Ask Aura AI answers (label | address). Keep thes
 - Capture Studio | /desk/sales-agent/capture-studio
 - Automation Studio | /desk/sales-agent/automation-studio
 - Templates | /desk/sales-agent/sales-templates
+- Sales Analytics | /desk/sales-agent/sales-analytics
 - Campaign Analytics | /desk/sales-agent/sales-analytics
 - Integrations | /desk/sales-agent/sales-channels
 - Agent Settings | /desk/sales-agent/sales-agent-settings
