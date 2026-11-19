@@ -1134,3 +1134,10 @@ body.aura-ask-page-reflow {
 	color: var(--aura-accent-ink);
 	border-color: var(--aura-accent);
 }
+
+/* One font everywhere: titles keep the heading font, but section labels, form controls and tables inside pages and
+   dialogs use the theme font instead of the browser's default or the heading font at a default size. */
+.page-container :where(button, input, select, textarea, table, th, td, label, summary),
+.modal-content :where(button, input, select, textarea, table, th, td, label, summary) { font-family: inherit; }
+.page-container .page-body :where(h4, h5, h6),
+.modal-body :where(h4, h5, h6) { font-family: var(--aura-font); letter-spacing: normal; }
