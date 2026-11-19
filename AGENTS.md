@@ -7,3 +7,4 @@
 - `tests/test_skills.py` fails when a product has no guide or a guide has no prompts.
 - Internal names stay `reckon_aura_theme` and **Aura Theme Settings**; the product name is **Reckon Aura AI** and the
   assistant is **Ask Aura AI**.
+- Building Aura features that *do* things (set up from a website, action tools, setup agent)? Read `AURA_AGENT_BACKLOG.md` first: it lists what is missing, the rules every agent tool must follow (tenant isolation, human approval) and the platform lessons learned.

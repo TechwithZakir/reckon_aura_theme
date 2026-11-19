@@ -42,4 +42,6 @@ Facts only: say "available on request" or "not documented here" rather than gues
 include customer data, keys or passwords. Prefer short numbered steps with the menu path. Keep Bangla natural and
 keep menu names in English where helpful.
 
+Building Aura features that act (not only answer)? See `AURA_AGENT_BACKLOG.md` in the app root.
+
 Run `python -m unittest tests.test_skills` before committing.

@@ -46,6 +46,33 @@ privileged is audited. Fields a source does not allow to keep are never stored.
 - **Duplicate prospects:** possible duplicates are flagged for review, never merged automatically.
 - **Thread list refused:** the person's company has no Sales Agent subscription or access.
 
+## Set up the business profile from the company website (copilot recipe)
+
+Lead Finder > Your business asks what the company sells and to whom. To help from a website:
+1. Read the company's own site, its industries pages and its product or pricing page. Use only what they say.
+2. Map it: **What you sell** (one sentence), **Products and services** (one chip each), **Problems you solve**,
+   **Target industries** (one per industries page), **Business types you sell to**, **Buyer roles**, **Regions you
+   serve**, **Signs of a good customer**.
+3. Leave **Competitors** and **Best customers** empty unless the site names them; never invent either.
+4. Chip fields split at commas, so avoid commas inside one item (write "ReckonBooks accounting and inventory", not
+   "ReckonBooks (accounting, sales, inventory)"). Press Save, then **Research my market**; a person reviews the
+   suggested segments before anything is searched.
+5. API keys and passwords for integrations are typed by the person, never by Aura.
+
+## Recent screens (say where things are)
+
+- **Sales Analytics** is first in the menu and the landing page. The **Campaign** group holds Campaigns, Signup forms
+  and lists, Automations, Message templates, Messages sent and the Do-not-contact list.
+- **Agent Studio (Home):** pipeline on top, agent cards (filter All, Needs you, Working, Idle; cards or list; Details
+  opens what it is doing, what waits for you and links to its work), then Needs you today beside Calls and
+  follow-ups and Live activity. Lists search, sort and page ten at a time.
+- **Lead Finder:** every step can be opened at any time; Smart Sources shows the sources it searches as icons.
+- **Campaign Studio > Audiences:** start from Lead Finder leads, CRM leads, customers or contacts, narrow with
+  filters, see the live count, then choose everyone who matches or tick people; Start a campaign from the audience.
+- **Meetings:** agenda, week and all-meetings views, New meeting, notes, and Add to calendar (Google Calendar,
+  Office 365, Outlook.com, .ics). A connected Google Calendar receives booked meetings automatically.
+- **Integrations:** filter by Connected, Not connected, Needs attention or Unavailable.
+
 ## Building an autonomous sales agent
 
 Start with one Targeting Profile and a small discovery campaign in review mode; read the results; add a scoring
@@ -82,6 +109,8 @@ Menu names that become links in Ask Aura AI answers (label | address). Keep thes
 ## Prompts to try
 
 - Help me write a Targeting Profile for my business.
+- Fill in my business profile from my company website.
+- How do I add a meeting to my Google or Office 365 calendar?
 - How do I find 50 distributors in Dhaka and follow up safely?
 - Why were no messages sent from my campaign?
 - Draft a three-step email sequence for new leads.
