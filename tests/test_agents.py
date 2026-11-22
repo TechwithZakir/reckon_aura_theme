@@ -33,6 +33,11 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(out["replies"], ["India", "Bangladesh"])
         self.frappe.get_attr.assert_called_with("reckon_hrms.ai_agent.chat")
 
+    def test_frappe_hands_hook_values_back_in_lists(self):
+        self.frappe.get_hooks = Mock(return_value={"hrms_setup": ["reckon_hrms.ai_agent.chat"]})
+        self.api._run_agent("hrms_setup", "start", None)
+        self.frappe.get_attr.assert_called_with("reckon_hrms.ai_agent.chat")
+
     def test_the_state_comes_back_as_text_from_the_page_and_is_parsed(self):
         self.api._run_agent("hrms_setup", "India", '{"idx": 0, "answers": {}}')
         self.assertEqual(self.calls[-1], ("India", {"idx": 0, "answers": {}}))

@@ -1045,6 +1045,8 @@ def _run_agent(name, message, state):
 			if isinstance(entry, dict):
 				handlers.update(entry)
 	path = handlers.get(str(name or ""))
+	if isinstance(path, (list, tuple)):  # Frappe keeps every app's value for a hook key in a list
+		path = path[-1] if path else None
 	if not path:
 		frappe.throw(_("This assistant is not available."))
 	if isinstance(state, str):
