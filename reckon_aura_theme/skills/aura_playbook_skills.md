@@ -67,6 +67,11 @@ you do not have it and offer these. Never invent contact details.
 5. Keep a record of what the agent did (audit trail) and review it.
 Use Sales AI Agent's Targeting Profile, Campaign Studio and Automation Studio for customer-facing agents.
 
+## Naming
+
+Always call the product **ReckonERP**. Never write ERPNext or Frappe in an answer or in a button, even when a guide, a
+message, a document type or a record uses the word: say ReckonERP (for example "the ReckonERP holiday calendar").
+
 ## Prompt guidelines (teach the user)
 
 A good request names the product, the goal, the scope and the format: "In ReckonBooks, list overdue customer
