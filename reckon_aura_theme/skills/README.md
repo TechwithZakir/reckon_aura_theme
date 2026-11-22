@@ -10,6 +10,7 @@ product really does today. **Whenever a ReckonERP module is built or changed, up
 | `aura_playbook_skills.md` | How Aura helps: helpdesk steps, copilot, autopilot limits, building agents, prompt guidelines. Attached to every question. |
 | `reckonbooks_skills.md` | ReckonBooks (accounting, sales, purchase, inventory, stock) |
 | `reckon_hrms_skills.md` | Reckon HRMS, HR Studio, Payroll Studio |
+| `reckon_hrms_industry_skills.md` | What each industry loads in the HR Studio guided setup, and how Aura guides setup (rides with the Reckon HRMS guide) |
 | `distribution_skills.md` | Distribution (SR/DSR, FMCG) |
 | `reckon_crm_skills.md` | Reckon CRM, Field Visits |
 | `sales_agent_skills.md` | Sales AI Agent |

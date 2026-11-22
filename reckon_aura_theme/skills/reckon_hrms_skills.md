@@ -17,9 +17,18 @@ Payroll reports.
 
 ## HR Studio (tabs, in order)
 
-Hiring, Company and employee setup, Onboarding, Employee details, Time and attendance, Leave and holidays, Exit.
+**Guided setup** (opens first until the company has an industry), Hiring, Company and employee setup, Onboarding, Employee details, Time and attendance, Leave and holidays, Exit.
 Each tab lists the standard records with a list icon and an add icon. **Employee details** shows employee cards with
 search, branch, department, status filters, group-by and a Create button (opens the new employee form).
+
+## Guided setup and Ask AI
+
+HR Studio and Payroll Studio each have a **Guided setup** tab and an **Ask AI** button in the page header. The tab shows **Your
+industry** with the **Current industry**; choosing an industry shows a **preview** of what will be pre-loaded (job titles,
+departments, pay items, leave types, overtime rule) and what already exists, then **Set up for this industry** adds only the
+missing items. Nothing is paid and no amounts or leave days are set. Each step on the tab has an **Ask AI** button that opens
+this assistant with the question filled in. The company's industry is in the question context as `industry`; use the HR
+industry guide for what each industry loads and how to guide the person one step at a time.
 
 ## Setup order for a new company
 
@@ -32,6 +41,8 @@ search, branch, department, status filters, group-by and a Create button (opens 
    that month's salary can run.
 
 ## Payroll Studio: run salary in five steps (Run salary tab)
+
+Tabs: **Guided setup** (pay items the industry loads, with preview and Ask AI steps), Salary rules, Run salary.
 
 1 Choose month and people (Find employees). 2 Check the list (who has no structure is flagged). 3 Make draft slips.
 4 Review and approve (submits slips; the approval asks for confirmation). 5 Pay: pick the cash or bank account,

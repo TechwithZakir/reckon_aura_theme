@@ -125,6 +125,23 @@ SKILL_GUIDES = (
 		),
 	},
 	{
+		# Rides along with the Reckon HRMS guide on HR Studio and Payroll Studio: what each industry loads and how to guide setup.
+		"id": "reckon_hrms_industry",
+		"title": "Reckon HRMS industry setup",
+		"file": "reckon_hrms_industry_skills.md",
+		"routes": (),
+		"companion_of": "reckon_hrms",
+		"markers": (
+			"industry",
+			"guided setup",
+			"pre-loaded",
+			"preloaded",
+			"starter data",
+			"ইন্ডাস্ট্রি",
+			"শিল্প",
+		),
+	},
+	{
 		"id": "distribution",
 		"title": "Distribution",
 		"file": "distribution_skills.md",
@@ -563,6 +580,16 @@ def _tenant_company():
 		return None
 
 
+def _company_industry(company):
+	"""The industry segment the company chose in Reckon HRMS (``reckon_industry``), when that field exists."""
+	try:
+		if company and frappe.db.has_column("Company", "reckon_industry"):
+			return frappe.db.get_value("Company", company, "reckon_industry") or ""
+	except Exception:
+		pass
+	return ""
+
+
 def _company_currency():
 	company = _tenant_company() or frappe.defaults.get_user_default("Company")
 	if company:
@@ -833,6 +860,12 @@ def _select_skill_guides(question, route):
 		guide for guide in SKILL_GUIDES if any(marker in route_text for marker in guide["routes"])
 	]
 	selected = route_matches[:1]
+	# A guide that rides along with the product guide on that product's pages (for example its industry setup).
+	selected += [
+		guide
+		for guide in SKILL_GUIDES
+		if selected and guide.get("companion_of") == selected[0]["id"] and guide not in selected
+	]
 
 	question_matches = []
 	for guide in SKILL_GUIDES:
@@ -1068,6 +1101,7 @@ def ask(question, route=None, history=None):
 		"company": company,
 		"currency": currency,
 		"current_page": str(route or "")[:200],
+		"industry": _company_industry(company),
 		"facts": [i["text"] for i in _build_brief()],
 		"records": _ask_records(),
 	}

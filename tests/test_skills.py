@@ -76,6 +76,20 @@ class GuideTests(unittest.TestCase):
         # The generic ERPNext routes still reach the generic guides.
         self.assertEqual(self.api._select_skill_guides("", "Human Resources/Leave Application")[0]["id"], "hr")
 
+    def test_hr_studio_and_payroll_studio_also_get_the_industry_guide(self):
+        for route in ("reckon-hrms/reckon-hrms-hr-studio", "reckon-hrms/reckon-hrms-setup"):
+            ids = [g["id"] for g in self.api._select_skill_guides("", route)]
+            self.assertEqual(ids[:2], ["reckon_hrms", "reckon_hrms_industry"])
+        # Other products do not carry it, and a question about industries finds it anywhere.
+        self.assertNotIn("reckon_hrms_industry", [g["id"] for g in self.api._select_skill_guides("", "sales-agent/lead-finder")])
+        self.assertIn("reckon_hrms_industry", [g["id"] for g in self.api._select_skill_guides("What does my industry pre-load?", "")])
+
+    def test_the_industry_guide_covers_each_industry_and_the_guided_setup(self):
+        text = (self.api.SKILLS_DIR / "reckon_hrms_industry_skills.md").read_text(encoding="utf-8")
+        self.assertGreaterEqual(text.count("\n### "), 10)
+        for needle in ("Guided setup", "preview", "Current industry", "does **not** create", "manufacturing_rmg_textile", "Overtime Type"):
+            self.assertIn(needle, text)
+
     def test_the_playbook_is_attached_to_every_question(self):
         self.assertIn("Helpdesk", self.api._get_playbook())
 

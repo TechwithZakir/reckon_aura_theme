@@ -461,6 +461,19 @@
 		setTimeout(() => $a.find("textarea").trigger("focus"), 20);
 	};
 
+	// Opens Ask Aura AI with a question already typed and sent: pages use it for guided "Ask AI" buttons.
+	aura.ask_about = function (text) {
+		if (!on(cfg().ai_bar)) {
+			frappe.show_alert({ message: __("The AI assistant is turned off."), indicator: "orange" });
+			return;
+		}
+		aura.open_ask();
+		const $input = aura.$ask.find("textarea");
+		$input.val(String(text || "")).trigger("input");
+		aura.resize_ask_input();
+		aura.submit_ask();
+	};
+
 	aura.toggle_ask_dock = function () {
 		const docked = aura.$ask.toggleClass("is-docked").hasClass("is-docked");
 		aura.$ask.find('[data-aura-ask-action="dock"]')
