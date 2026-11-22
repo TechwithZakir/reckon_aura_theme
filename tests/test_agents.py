@@ -138,6 +138,28 @@ class ButtonTests(unittest.TestCase):
         self.assertIn('class="aura-qr"', block)
 
 
+class RateLimitTests(unittest.TestCase):
+    def test_agent_turns_have_their_own_high_limit_so_an_interview_cannot_use_up_the_ai_questions(self):
+        import re
+
+        text = (Path(__file__).resolve().parents[1] / "reckon_aura_theme" / "api.py").read_text(encoding="utf-8")
+        agent_limit = int(re.search(r"rate_limit\(limit=(\d+)[^)]*\)\s+def ask_agent", text).group(1))
+        ask_limit = int(re.search(r"rate_limit\(limit=(\d+)[^)]*\)\s+def ask\(", text).group(1))
+        self.assertGreaterEqual(agent_limit, 300)
+        self.assertEqual(ask_limit, 40)
+        self.assertIn('agent ? "reckon_aura_theme.api.ask_agent"', JS.read_text(encoding="utf-8"))
+
+    def test_ask_agent_runs_the_agent_and_needs_one(self):
+        api, frappe, _c = support.load_api()
+        frappe.get_hooks = Mock(return_value={"hrms_setup": ["reckon_hrms.ai_agent.chat"]})
+        frappe.get_attr = Mock(return_value=lambda m, s: {"reply": "Hi", "state": {"idx": 0}, "replies": [], "done": False})
+        with patch.object(api, "_require_desk_user"), patch.object(api, "_settings", return_value=Mock(enable_ai_bar=1)):
+            out = api.ask_agent("start", agent="hrms_setup")
+            self.assertEqual(out["answer"], "Hi")
+            with self.assertRaises(support.Boom):
+                api.ask_agent("start", agent="")
+
+
 class PageTests(unittest.TestCase):
     def test_the_chat_can_start_an_agent_and_shows_quick_replies(self):
         text = JS.read_text(encoding="utf-8")

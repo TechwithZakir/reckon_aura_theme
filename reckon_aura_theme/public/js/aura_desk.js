@@ -764,7 +764,8 @@
 		aura.ask_pending = true;
 		$a.find('[data-aura-ask-action="send"], [data-aura-ask-action="new-chat"]').prop("disabled", true);
 		frappe
-			.xcall("reckon_aura_theme.api.ask", {
+			// Agent turns are many and short and use no AI, so they have their own endpoint and a higher rate limit.
+			.xcall(agent ? "reckon_aura_theme.api.ask_agent" : "reckon_aura_theme.api.ask", {
 				question: q,
 				route: frappe.get_route_str ? frappe.get_route_str() : "",
 				history: JSON.stringify(history),

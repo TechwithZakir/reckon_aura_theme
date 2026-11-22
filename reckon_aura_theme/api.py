@@ -1152,6 +1152,19 @@ def _sanitize_ask_history(history):
 
 
 @frappe.whitelist(methods=["POST"])
+@rate_limit(limit=600, seconds=60 * 60)
+def ask_agent(question, route=None, agent=None, agent_state=None):
+	"""One turn of an agent chat. An interview is many short turns and uses no AI, so it has its own, much higher limit."""
+	_require_desk_user()
+	question = (question or "").strip()[:2000]
+	if not question or not agent:
+		frappe.throw(_("Type a question first."))
+	if not cint(_settings().enable_ai_bar):
+		frappe.throw(_("The AI assistant is turned off."))
+	return _run_agent(agent, question, agent_state)
+
+
+@frappe.whitelist(methods=["POST"])
 @rate_limit(limit=40, seconds=60 * 60)
 def ask(question, route=None, history=None, agent=None, agent_state=None):
 	_require_desk_user()
