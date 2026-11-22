@@ -86,3 +86,8 @@ Menu names that become links in Ask Aura AI answers (label | address). Keep thes
 - ২০ জনের ব্যবসার জন্য কোন ReckonERP প্ল্যান ঠিক হবে?
 - নতুন ব্যবহারকারী যোগ করে অ্যাক্সেস কীভাবে দেব?
 - আমার সাবস্ক্রিপশনে কী কী আছে?
+
+## Vendor: enabling plans and paying a year at once
+
+- SaaS Dashboard, Plans table: each price row has an On/Off switch, and "Whole plan" switches every currency and cycle of that tier together. Off hides it from pricing and signup; running subscriptions continue.
+- A Monthly SaaS Plan row has "Allow paying a year at once" and "Months charged for the year" (1 to 12, set per currency row, no default). Saving it creates or updates the matching Yearly row (price = monthly price x months) and the normal Paddle price sync follows.
