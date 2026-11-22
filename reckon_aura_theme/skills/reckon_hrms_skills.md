@@ -27,7 +27,12 @@ HR Studio and Payroll Studio each have a **Guided setup** tab and an **Ask AI** 
 industry** with the **Current industry**; choosing an industry shows a **preview** of what will be pre-loaded (job titles,
 departments, pay items, leave types, overtime rule) and what already exists, then **Set up for this industry** adds only the
 missing items. Nothing is paid and no amounts or leave days are set. Each step on the tab has an **Ask AI** button that opens
-this assistant with the question filled in. The company's industry is in the question context as `industry`; use the HR
+this assistant with the question filled in. Below the industry the **Setup interview** asks one question per step (other
+departments, job titles, weekly off days, public holidays, working hours, leave days per year, salary structure percentages);
+**Ask AI to prepare my setup** builds one plan to review (green = will be added, orange = needs attention), and **Set everything
+up** runs it for the signed-in company only. Empty answers are skipped; Ask AI only reads free text such as a holiday list and
+never makes up amounts, dates or leave days. Leave days become a Leave Policy that employees get when it is assigned to them.
+The company's industry is in the question context as `industry`; use the HR
 industry guide for what each industry loads and how to guide the person one step at a time.
 
 ## Setup order for a new company
