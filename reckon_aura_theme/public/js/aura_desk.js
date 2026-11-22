@@ -699,6 +699,32 @@
 		aura.submit_ask(hidden_first_message || "start", true);
 	};
 
+	// Radio buttons for a single answer, checkboxes for several. Sending sends the chosen labels as the person's reply.
+	aura.render_choices = function ($content, choices) {
+		if (!choices || !choices.options || !choices.options.length) return;
+		const multi = choices.type === "multi";
+		const name = "aura-choice-" + Date.now();
+		const $box = $(`<form class="aura-choices aura-quick-replies" role="${multi ? "group" : "radiogroup"}"></form>`).appendTo(
+			$content.closest(".aura-chat-message")
+		);
+		choices.options.forEach((o, i) => {
+			const $row = $(`<label class="aura-choice"><input type="${multi ? "checkbox" : "radio"}" name="${name}"><span></span></label>`).appendTo($box);
+			$row.find("input").val(o.value).prop("checked", !!o.checked);
+			$row.find("span").text(o.label);
+		});
+		const $go = $(`<button type="submit" class="aura-chip aura-choice-go">${__("Continue")}</button>`).appendTo($box);
+		const ready = () => $go.prop("disabled", !$box.find("input:checked").length);
+		$box.on("change", "input", ready);
+		ready();
+		$box.on("submit", (e) => {
+			e.preventDefault();
+			const picked = $box.find("input:checked").map((_i, el) => el.value).get();
+			if (!picked.length) return;
+			$box.remove();
+			aura.submit_ask(picked.join(", "));
+		});
+	};
+
 	aura.render_quick_replies = function ($content, replies) {
 		if (!replies || !replies.length) return;
 		const $row = $(`<div class="aura-chips aura-quick-replies"></div>`).appendTo($content.closest(".aura-chat-message"));
@@ -751,6 +777,7 @@
 				if (agent || (r && Object.prototype.hasOwnProperty.call(r, "agent"))) {
 					aura.agent = (r && r.agent) || null;
 					aura.agent_state = (r && r.agent_state) || null;
+					aura.render_choices($answer.find(".aura-chat-content"), r && r.choices);
 					aura.render_quick_replies($answer.find(".aura-chat-content"), r && r.replies);
 				}
 				aura.ask_history = aura.ask_history.concat(

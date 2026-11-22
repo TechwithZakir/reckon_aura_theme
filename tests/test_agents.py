@@ -106,10 +106,28 @@ class IntentTests(unittest.TestCase):
         complete.assert_not_called()
 
 
+class ChoiceTests(unittest.TestCase):
+    def setUp(self):
+        self.api, self.frappe, _cache = support.load_api()
+
+    def test_radio_and_checkbox_choices_pass_through_cleaned(self):
+        out = self.api._clean_choices({"type": "multi", "options": [{"label": "Friday", "value": "Friday", "checked": 1}, {"label": "Saturday"}, "junk", {"nolabel": 1}]})
+        self.assertEqual(out["type"], "multi")
+        self.assertEqual(out["options"], [{"label": "Friday", "value": "Friday", "checked": True}, {"label": "Saturday", "value": "Saturday", "checked": False}])
+
+    def test_anything_else_is_dropped(self):
+        for bad in (None, "x", {"type": "dropdown", "options": [{"label": "a"}]}, {"type": "single", "options": []}, {"type": "single", "options": ["a"]}):
+            self.assertIsNone(self.api._clean_choices(bad))
+
+    def test_the_options_are_capped(self):
+        out = self.api._clean_choices({"type": "single", "options": [{"label": str(i)} for i in range(40)]})
+        self.assertEqual(len(out["options"]), 14)
+
+
 class PageTests(unittest.TestCase):
     def test_the_chat_can_start_an_agent_and_shows_quick_replies(self):
         text = JS.read_text(encoding="utf-8")
-        for needle in ("aura.start_agent", "aura.agent_state", "render_quick_replies", "agent_state: agent ?", "hasOwnProperty.call(r, \"agent\")"):
+        for needle in ("aura.start_agent", "aura.agent_state", "render_quick_replies", "agent_state: agent ?", "hasOwnProperty.call(r, \"agent\")", "render_choices", 'type="${multi ? "checkbox" : "radio"}"'):
             self.assertIn(needle, text)
 
 

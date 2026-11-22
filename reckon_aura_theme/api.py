@@ -1085,7 +1085,20 @@ def _run_agent(name, message, state):
 		"agent": None if done else name,
 		"agent_state": None if done else result.get("state"),
 		"replies": [str(r)[:60] for r in (result.get("replies") or [])][:8],
+		"choices": _clean_choices(result.get("choices")),
 	}
+
+
+def _clean_choices(choices):
+	"""Radio buttons (``single``) or checkboxes (``multi``) an agent asks the page to draw; anything else is dropped."""
+	if not isinstance(choices, dict) or choices.get("type") not in ("single", "multi"):
+		return None
+	options = []
+	for option in (choices.get("options") or [])[:14]:
+		if isinstance(option, dict) and option.get("label"):
+			options.append({"label": str(option["label"])[:80], "value": str(option.get("value") or option["label"])[:80],
+							"checked": bool(option.get("checked"))})
+	return {"type": choices["type"], "options": options} if options else None
 
 
 def _ask_system_prompt(s):

@@ -1141,3 +1141,11 @@ body.aura-ask-page-reflow {
 .modal-content :where(button, input, select, textarea, table, th, td, label, summary) { font-family: inherit; }
 .page-container .page-body :where(h4, h5, h6),
 .modal-body :where(h4, h5, h6) { font-family: var(--aura-font); letter-spacing: normal; }
+
+/* Agent questions: radio buttons for one answer, checkboxes for several. */
+.aura-choices { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; align-items: flex-start; }
+.aura-choice { display: flex; align-items: center; gap: 8px; margin: 0; padding: 6px 12px; border: 1px solid var(--aura-border, rgba(128,128,128,.35)); border-radius: 10px; cursor: pointer; font-weight: 500; min-width: 240px; }
+.aura-choice:hover { border-color: var(--aura-accent); background: var(--aura-accent-soft); }
+.aura-choice input { margin: 0; accent-color: var(--aura-accent); }
+.aura-choice-go { margin-top: 4px; cursor: pointer; }
+.aura-choice-go:disabled { opacity: .5; cursor: default; }
