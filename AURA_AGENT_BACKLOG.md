@@ -41,6 +41,19 @@ Answer from the guides, turn menu names into links, show prompts, fill sales and
 - **A reset needs more than deleting rows.** Clear links in kept records that pointed at deleted ones (the profile's
   latest brief), and expect agents to create new rows (a market brief) the moment a page opens.
 
+## Lessons from the HR setup agent (a chat that asks, then acts)
+
+- **A text answer is not a setup.** The model will happily write a how-to when asked to "guide me". A guided action needs an
+  agent (a state machine in the chat that asks one question at a time and applies the plan itself), and a plain question that
+  is really a request must start that agent. Both are built: `aura_agents` and `aura_agent_intents` in an app's hooks. See the
+  "Agents" section of `reckon_aura_theme/skills/README.md`.
+- **Frappe hands hook values back in lists** (`{"name": ["path"]}`). Read the last item before calling `frappe.get_attr`.
+- **Rehearse an apply step on production inside a transaction.** Replace `frappe.db.commit` with a no-op in the script, run the
+  whole conversation, print what exists, then roll back and print that it is gone. It found bugs a unit test could not.
+- **The agent state is the browser's.** Clean it on every turn and rebuild the plan on the server before any write.
+- **Shared masters are not the company's.** Designation, Leave Type, Salary Component and Overtime Type are shared catalogs:
+  an agent may add to them but must not change or delete what other companies use.
+
 ## Hard rules for every agent tool
 
 - **Tenant isolation first.** Every query and write is limited to the signed-in person's Company. One company's data is

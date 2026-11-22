@@ -43,6 +43,26 @@ Facts only: say "available on request" or "not documented here" rather than gues
 include customer data, keys or passwords. Prefer short numbered steps with the menu path. Keep Bangla natural and
 keep menu names in English where helpful.
 
+## Agents: a chat that asks questions and then does the work
+
+Aura answers questions; an **agent** also asks them and acts. It is how Reckon HRMS sets a company up from a conversation.
+The pieces, so another module can do the same:
+
+1. **The agent** is a function `chat(message, state) -> {reply, state, replies, done}` in the app. Keep the questions and the
+   reading of replies in a pure, tested state machine (no Frappe); the function only supplies site facts and the apply step.
+2. **Register it** in the app's `hooks.py`: `aura_agents = {"name": "app.module.chat"}`. Optionally add
+   `aura_agent_intents = {"name": "app.module.intent"}`, a function `(question, route)` that returns the agent's first message
+   when a plain question is really a request for it (so "help me set up" starts the agent instead of a text answer).
+3. **Aura runs it**: `api.ask(..., agent, agent_state)` calls only registered agents, with no AI call and no daily quota used.
+   The page keeps the state and shows `replies` as quick-reply buttons; `aura.start_agent(name, first_message)` starts one
+   from a page button.
+4. **Safety rules**: the state lives in the browser, so clean it on every turn; rebuild the plan from the answers on the
+   server before any write; create nothing until the person confirms in the chat; only fixed, get-or-create steps for the
+   signed-in company, never a free-form write chosen by the AI; ask again when a reply cannot be read, never guess a number;
+   check the role inside the agent. Use the AI only to read free text, with strict JSON and a fallback when it is off.
+5. **Test** the state machine without a site and rehearse the apply step on a real site inside a transaction that you roll back.
+6. **Document** the questions and the agent in the product guide, and tell the model to start the agent instead of writing a how-to.
+
 Building Aura features that act (not only answer)? See `AURA_AGENT_BACKLOG.md` in the app root.
 
 Run `python -m unittest tests.test_skills` before committing.

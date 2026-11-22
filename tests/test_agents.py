@@ -69,10 +69,47 @@ class AgentTests(unittest.TestCase):
         quota.assert_not_called()
 
 
+class IntentTests(unittest.TestCase):
+    def setUp(self):
+        self.api, self.frappe, _cache = support.load_api()
+
+    def hooks(self, mapping):
+        self.frappe.get_hooks = Mock(side_effect=lambda name: mapping.get(name) or {})
+
+    def test_a_plain_question_that_is_a_request_for_an_agent_starts_it(self):
+        self.hooks({"aura_agent_intents": {"hrms_setup": ["reckon_hrms.ai_agent.intent"]}})
+        self.frappe.get_attr = Mock(return_value=lambda q, route: "start industry")
+        self.assertEqual(self.api._agent_for_question("Which industry should I choose?", "reckon-hrms/x"), ("hrms_setup", "start industry"))
+
+    def test_other_questions_get_the_normal_answer_and_a_failing_intent_never_blocks_it(self):
+        self.hooks({"aura_agent_intents": {"hrms_setup": ["reckon_hrms.ai_agent.intent"]}})
+        self.frappe.get_attr = Mock(return_value=lambda q, route: None)
+        self.assertIsNone(self.api._agent_for_question("What is a salary slip?", "x"))
+        self.frappe.get_attr = Mock(side_effect=ImportError("app not installed"))
+        self.assertIsNone(self.api._agent_for_question("anything", "x"))
+        self.hooks({})
+        self.assertIsNone(self.api._agent_for_question("anything", "x"))
+
+    def test_ask_starts_the_agent_for_such_a_question_without_the_ai(self):
+        self.hooks({"aura_agents": {"hrms_setup": ["reckon_hrms.ai_agent.chat"]}, "aura_agent_intents": {"hrms_setup": ["reckon_hrms.ai_agent.intent"]}})
+        calls = []
+
+        def get_attr(path):
+            if path.endswith("intent"):
+                return lambda q, route: "start industry"
+            return lambda message, state: calls.append(message) or {"reply": "What does your company do?", "state": {"idx": 3}, "replies": ["skip"], "done": False}
+
+        self.frappe.get_attr = Mock(side_effect=get_attr)
+        with patch.object(self.api, "_require_desk_user"), patch.object(self.api, "_settings", return_value=Mock(enable_ai_bar=1)),                 patch.object(self.api, "_complete") as complete:
+            out = self.api.ask("Which industry should I choose for my company?", route="reckon-hrms/hr")
+        self.assertEqual((out["agent"], out["answer"], calls), ("hrms_setup", "What does your company do?", ["start industry"]))
+        complete.assert_not_called()
+
+
 class PageTests(unittest.TestCase):
     def test_the_chat_can_start_an_agent_and_shows_quick_replies(self):
         text = JS.read_text(encoding="utf-8")
-        for needle in ("aura.start_agent", "aura.agent_state", "render_quick_replies", "agent_state: agent ?"):
+        for needle in ("aura.start_agent", "aura.agent_state", "render_quick_replies", "agent_state: agent ?", "hasOwnProperty.call(r, \"agent\")"):
             self.assertIn(needle, text)
 
 

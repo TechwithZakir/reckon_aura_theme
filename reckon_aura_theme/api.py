@@ -1030,6 +1030,27 @@ def get_prompts(route=None, count=4):
 	return picked[:count]
 
 
+def _agent_for_question(question, route):
+	"""``(agent, first message)`` when a plain question is really a request for a registered agent, else None.
+
+	Apps register ``aura_agent_intents`` (agent name -> a function ``(question, route)`` that returns the agent's first
+	message or None). A failing intent function never stops a normal answer.
+	"""
+	hooks = frappe.get_hooks("aura_agent_intents") or {}
+	entries = [hooks] if isinstance(hooks, dict) else [h for h in hooks if isinstance(h, dict)]
+	for entry in entries:
+		for name, path in entry.items():
+			if isinstance(path, (list, tuple)):
+				path = path[-1] if path else None
+			try:
+				first = frappe.get_attr(path)(question, str(route or "")) if path else None
+			except Exception:
+				continue
+			if isinstance(first, str) and first:
+				return name, first
+	return None
+
+
 def _run_agent(name, message, state):
 	"""A registered agent (``aura_agents`` in an app's hooks) takes the chat: it asks questions and does the work itself.
 
@@ -1128,6 +1149,9 @@ def ask(question, route=None, history=None, agent=None, agent_state=None):
 		frappe.throw(_("The AI assistant is turned off."))
 	if agent:
 		return _run_agent(agent, question, agent_state)
+	started = _agent_for_question(question, route)
+	if started:
+		return _run_agent(started[0], started[1], None)
 	history = _sanitize_ask_history(history)
 	_require_ai(s)
 	_consume_daily_ask_quota(s)

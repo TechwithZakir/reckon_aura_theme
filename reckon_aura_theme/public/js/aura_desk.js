@@ -747,7 +747,8 @@
 			.then((r) => {
 				const answer = (r && r.answer) || __("No answer.");
 				aura.show_answer($answer.find(".aura-chat-content"), answer);
-				if (agent) {
+				// An answer that names an agent (even to a plain question) keeps the chat with it until it is done.
+				if (agent || (r && Object.prototype.hasOwnProperty.call(r, "agent"))) {
 					aura.agent = (r && r.agent) || null;
 					aura.agent_state = (r && r.agent_state) || null;
 					aura.render_quick_replies($answer.find(".aura-chat-content"), r && r.replies);
