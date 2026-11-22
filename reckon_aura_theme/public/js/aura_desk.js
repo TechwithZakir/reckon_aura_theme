@@ -441,6 +441,8 @@
 	aura.new_ask_chat = function () {
 		if (!aura.$ask || aura.ask_pending) return;
 		aura.ask_history = [];
+		aura.agent = null;
+		aura.agent_state = null;
 		aura.$ask.find(".aura-chat-turn, .aura-jumps").remove();
 		aura.render_ask_welcome();
 		aura.$ask.find("textarea").val("").trigger("input").trigger("focus");
@@ -468,6 +470,8 @@
 			return;
 		}
 		aura.open_ask();
+		aura.agent = null;
+		aura.agent_state = null;
 		const $input = aura.$ask.find("textarea");
 		$input.val(String(text || "")).trigger("input");
 		aura.resize_ask_input();
@@ -680,15 +684,42 @@
 		aura.autolink($content);
 	};
 
-	aura.submit_ask = function () {
+	// An agent is a registered assistant (an app's `aura_agents` hook) that asks questions in this chat and does the work.
+	aura.agent = null;
+	aura.agent_state = null;
+	aura.start_agent = function (name, hidden_first_message) {
+		if (!on(cfg().ai_bar)) {
+			frappe.show_alert({ message: __("The AI assistant is turned off."), indicator: "orange" });
+			return;
+		}
+		aura.open_ask();
+		aura.new_ask_chat();
+		aura.agent = name;
+		aura.agent_state = null;
+		aura.submit_ask(hidden_first_message || "start", true);
+	};
+
+	aura.render_quick_replies = function ($content, replies) {
+		if (!replies || !replies.length) return;
+		const $row = $(`<div class="aura-chips aura-quick-replies"></div>`).appendTo($content.closest(".aura-chat-message"));
+		replies.forEach((label) => {
+			$(`<button type="button" class="aura-chip"></button>`).text(label).appendTo($row).on("click", () => {
+				$row.remove();
+				aura.submit_ask(label);
+			});
+		});
+	};
+
+	aura.submit_ask = function (override, silent) {
 		const $a = aura.$ask;
 		if (aura.ask_pending) return;
 		const $input = $a.find("textarea");
-		const q = ($input.val() || "").trim();
+		const q = (typeof override === "string" ? override : $input.val() || "").trim();
 		if (!q) return;
-		$a.find(".aura-ask-welcome, .aura-jumps").remove();
-		aura.render_ask_message("user", q);
-		if (!cfg().ai_ready) {
+		$a.find(".aura-ask-welcome, .aura-jumps, .aura-quick-replies").remove();
+		if (!silent) aura.render_ask_message("user", q);
+		const agent = aura.agent;
+		if (!agent && !cfg().ai_ready) {
 			$input.val(q);
 			aura.resize_ask_input();
 			aura.render_jumps(q);
@@ -699,7 +730,7 @@
 			);
 			return;
 		}
-		$input.val("").trigger("input");
+		if (typeof override !== "string") $input.val("").trigger("input");
 		aura.resize_ask_input();
 		const history = aura.ask_history.slice(-12);
 		const $answer = aura.render_ask_message("assistant", "", "pending");
@@ -710,10 +741,17 @@
 				question: q,
 				route: frappe.get_route_str ? frappe.get_route_str() : "",
 				history: JSON.stringify(history),
+				agent: agent || "",
+				agent_state: agent ? JSON.stringify(aura.agent_state || null) : "",
 			})
 			.then((r) => {
 				const answer = (r && r.answer) || __("No answer.");
 				aura.show_answer($answer.find(".aura-chat-content"), answer);
+				if (agent) {
+					aura.agent = (r && r.agent) || null;
+					aura.agent_state = (r && r.agent_state) || null;
+					aura.render_quick_replies($answer.find(".aura-chat-content"), r && r.replies);
+				}
 				aura.ask_history = aura.ask_history.concat(
 					{ role: "user", content: q },
 					{ role: "assistant", content: answer }

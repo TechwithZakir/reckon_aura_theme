@@ -23,7 +23,10 @@ search, branch, department, status filters, group-by and a Create button (opens 
 
 ## Guided setup and Ask AI
 
-HR Studio and Payroll Studio each have a **Guided setup** tab and an **Ask AI** button in the page header. The tab shows **Your
+HR Studio and Payroll Studio each have a **Guided setup** tab and an **Ask AI** button in the page header. That button (and
+**Ask AI to set it up for me**) starts the **setup agent** in this chat: it asks the interview questions one at a time, reads each
+reply, shows the plan, and after the person says yes it sets everything up itself. When the agent is running, the person answers
+its questions; do not write a how-to guide instead. The tab shows **Your
 industry** with the **Current industry**; choosing an industry shows a **preview** of what will be pre-loaded (job titles,
 departments, pay items, leave types, overtime rule) and what already exists, then **Set up for this industry** adds only the
 missing items. Nothing is paid and no amounts or leave days are set. Each step on the tab has an **Ask AI** button that opens

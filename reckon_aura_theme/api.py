@@ -1030,6 +1030,40 @@ def get_prompts(route=None, count=4):
 	return picked[:count]
 
 
+def _run_agent(name, message, state):
+	"""A registered agent (``aura_agents`` in an app's hooks) takes the chat: it asks questions and does the work itself.
+
+	Only names an installed app registered can run. The agent returns its reply, its own state for the next turn,
+	quick replies, and ``done`` when it has finished; the state is kept by the browser, so an agent must re-check it.
+	"""
+	hooks = frappe.get_hooks("aura_agents") or {}
+	handlers = {}
+	if isinstance(hooks, dict):
+		handlers.update(hooks)
+	else:
+		for entry in hooks:
+			if isinstance(entry, dict):
+				handlers.update(entry)
+	path = handlers.get(str(name or ""))
+	if not path:
+		frappe.throw(_("This assistant is not available."))
+	if isinstance(state, str):
+		try:
+			state = json.loads(state)
+		except ValueError:
+			state = None
+	result = frappe.get_attr(path)(message, state if isinstance(state, dict) else None)
+	if not isinstance(result, dict) or "reply" not in result:
+		frappe.throw(_("The assistant did not answer."))
+	done = bool(result.get("done"))
+	return {
+		"answer": str(result["reply"])[:6000],
+		"agent": None if done else name,
+		"agent_state": None if done else result.get("state"),
+		"replies": [str(r)[:60] for r in (result.get("replies") or [])][:8],
+	}
+
+
 def _ask_system_prompt(s):
 	custom_prompt = (s.ai_system_prompt or "").strip()
 	return "\n\n".join((custom_prompt or DEFAULT_PROMPT, SUPPORT_INSTRUCTIONS))
@@ -1082,15 +1116,17 @@ def _sanitize_ask_history(history):
 
 @frappe.whitelist(methods=["POST"])
 @rate_limit(limit=40, seconds=60 * 60)
-def ask(question, route=None, history=None):
+def ask(question, route=None, history=None, agent=None, agent_state=None):
 	_require_desk_user()
 	question = (question or "").strip()[:2000]
 	if not question:
 		frappe.throw(_("Type a question first."))
-	history = _sanitize_ask_history(history)
 	s = _settings()
 	if not cint(s.enable_ai_bar):
 		frappe.throw(_("The AI assistant is turned off."))
+	if agent:
+		return _run_agent(agent, question, agent_state)
+	history = _sanitize_ask_history(history)
 	_require_ai(s)
 	_consume_daily_ask_quota(s)
 
