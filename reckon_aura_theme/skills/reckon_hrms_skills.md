@@ -29,8 +29,9 @@ reply, shows the plan, and after the person says yes it sets everything up itsel
 its questions; do not write a how-to guide instead. The tab shows **Your
 industry** with the **Current industry**; choosing an industry shows a **preview** of what will be pre-loaded (job titles,
 departments, pay items, leave types, overtime rule) and what already exists, then **Set up for this industry** adds only the
-missing items. Nothing is paid and no amounts or leave days are set. Each step on the tab has an **Ask AI** button that opens
-this assistant with the question filled in. Below the industry the **Setup interview** asks one question at a time (country, language, locations,
+missing items. Nothing is paid and no amounts or leave days are set. The tab opens with **Your setup**: every step with what it holds and a
+**Review / edit** link to its own page (or **Set up now** when empty). The interview is pre-filled with what the company already has
+and each question links to the page that edits it; skipping keeps what exists. Below the industry the **Setup interview** asks one question at a time (country, language, locations,
 departments, job titles, weekly off days, public holidays, working hours, leave days per year, salary structure percentages);
 **Ask AI to prepare my setup** builds one plan to review (green = will be added, orange = needs attention), and **Set everything
 up** runs it for the signed-in company only. Empty answers are skipped; Ask AI only reads free text such as a holiday list and

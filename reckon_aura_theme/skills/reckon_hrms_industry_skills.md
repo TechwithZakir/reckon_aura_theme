@@ -23,6 +23,10 @@ line), working hours (shift name, start, end, late grace), leave days per year (
 (Basic % of gross, house rent % of gross, medical and conveyance as fixed monthly amounts). Each step can be skipped. Never suggest
 numbers for them; ask the company's policy.
 
+When data already exists the agent shows it ("Now: ...") and the page that edits it (Branch, Department, Designation, Holiday List,
+Shift Type, Leave Policy, Salary Structure); skipping keeps it. The agent only adds: to change something that exists, send the person
+to that page.
+
 Guide the person one step at a time and ask what they have done before moving on:
 
 1. Choose the industry (preview, then Set up for this industry). If the industry is not chosen yet, ask what the company does and name the closest one.
