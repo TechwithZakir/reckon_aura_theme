@@ -786,7 +786,7 @@ body.aura-ask-page-reflow {
 }
 .aura-ask-welcome p { margin: 0; color: var(--aura-muted); font-size: 13px; }
 .aura-ask-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
-.aura-chip {
+.aura-chip, .aura-qr, .aura-choice-go {
 	border: 1px solid var(--aura-line);
 	background: var(--aura-hover);
 	color: var(--aura-text);
@@ -813,7 +813,7 @@ body.aura-ask-page-reflow {
 	margin-top: 10px; background: none; border: 0; color: var(--aura-text-dim, var(--aura-text)); font-size: 12px; cursor: pointer; opacity: .8;
 }
 .aura-more-ideas:hover { opacity: 1; color: var(--aura-accent); text-decoration: underline; }
-.aura-chip:hover { color: var(--aura-text); border-color: var(--aura-accent); background: var(--aura-accent-soft); }
+.aura-chip:hover, .aura-qr:hover, .aura-choice-go:hover:not(:disabled) { color: var(--aura-text); border-color: var(--aura-accent); background: var(--aura-accent-soft); }
 .aura-chat-turn { max-width: 100%; }
 .aura-chat-turn--user { display: flex; justify-content: flex-end; }
 .aura-chat-bubble {

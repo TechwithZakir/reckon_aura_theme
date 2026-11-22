@@ -712,7 +712,7 @@
 			$row.find("input").val(o.value).prop("checked", !!o.checked);
 			$row.find("span").text(o.label);
 		});
-		const $go = $(`<button type="submit" class="aura-chip aura-choice-go">${__("Continue")}</button>`).appendTo($box);
+		const $go = $(`<button type="submit" class="aura-choice-go">${__("Continue")}</button>`).appendTo($box);
 		const ready = () => $go.prop("disabled", !$box.find("input:checked").length);
 		$box.on("change", "input", ready);
 		ready();
@@ -729,7 +729,8 @@
 		if (!replies || !replies.length) return;
 		const $row = $(`<div class="aura-chips aura-quick-replies"></div>`).appendTo($content.closest(".aura-chat-message"));
 		replies.forEach((label) => {
-			$(`<button type="button" class="aura-chip"></button>`).text(label).appendTo($row).on("click", () => {
+			// Not an `aura-chip`: those fill the box with their own text and send it, which would send the wrong thing here.
+			$(`<button type="button" class="aura-qr"></button>`).text(label).appendTo($row).on("click", () => {
 				$row.remove();
 				aura.submit_ask(label);
 			});

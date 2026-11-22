@@ -124,6 +124,20 @@ class ChoiceTests(unittest.TestCase):
         self.assertEqual(len(out["options"]), 14)
 
 
+class ButtonTests(unittest.TestCase):
+    def test_choice_and_quick_reply_buttons_are_not_the_welcome_chips(self):
+        """A global handler sends the text of every `.aura-chip`: the Continue button sent the word "Continue" for the answer."""
+        text = JS.read_text(encoding="utf-8")
+        start = text.index("aura.render_choices = function")
+        end = text.index("aura.submit_ask = function")
+        block = text[start:end]
+        import re
+
+        self.assertIsNone(re.search(r'class="[^"]*aura-chip', block))  # `aura-chips` (the row) is fine: the handler is on `.aura-chip`
+        self.assertIn('class="aura-choice-go"', block)
+        self.assertIn('class="aura-qr"', block)
+
+
 class PageTests(unittest.TestCase):
     def test_the_chat_can_start_an_agent_and_shows_quick_replies(self):
         text = JS.read_text(encoding="utf-8")
