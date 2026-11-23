@@ -51,7 +51,10 @@ industry guide for what each industry loads and how to guide the person one step
 
 ## Payroll Studio: run salary in five steps (Run salary tab)
 
-Tabs: **Guided setup** (pay items the industry loads, with preview and Ask AI steps), Salary rules, Run salary.
+Tabs: **Guided setup**, Salary rules, Run salary. Payroll's Guided setup is the salary process in HRMS order: employees, holidays, attendance and leave
+(set in HR Studio: shown as status with a link, never asked again), then payroll payable account, pay items, salary structure, the late and early
+deduction rule (editable inline), structure given to people, and Run salary. Ask AI there (`start payroll`) asks only two questions: the salary
+structure (name, basic %, house rent %, medical, conveyance) and the deduction rule (every N marks = 1 day, pay / divisor, optional cap).
 
 1 Choose month and people (Find employees). 2 Check the list (who has no structure is flagged). 3 Make draft slips.
 4 Review and approve (submits slips; the approval asks for confirmation). 5 Pay: pick the cash or bank account,

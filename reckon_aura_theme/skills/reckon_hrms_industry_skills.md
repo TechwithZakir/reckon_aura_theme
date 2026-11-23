@@ -11,7 +11,7 @@ HR Studio > **Guided setup** tab has a section **Your industry** with **Current 
 of what will be loaded and what already exists; **Set up for this industry** then adds only what is missing. Repeating it is safe.
 It adds job titles (Designation), departments, salary components (and their accounts), leave types and, where the industry uses
 overtime, the Overtime Type 'Standard Overtime'. It does **not** create salary amounts, salary structures, leave days, employees or
-payments. Payroll Studio > **Guided setup** shows the pay items and recovery items the industry loads. Both tabs have **Ask AI** buttons
+payments. Payroll Studio > **Guided setup** is a payroll checklist and asks no HR questions. Both tabs have **Ask AI** buttons
 that open this assistant with the question already filled in.
 
 When someone asks for help with setup, ask the interview questions one at a time and in this order, say what each answer will
