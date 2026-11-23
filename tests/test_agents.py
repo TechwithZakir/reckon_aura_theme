@@ -160,6 +160,22 @@ class RateLimitTests(unittest.TestCase):
                 api.ask_agent("start", agent="")
 
 
+class TimeoutTests(unittest.TestCase):
+    def test_a_caller_can_cap_how_long_the_ai_may_take(self):
+        api, frappe, _c = support.load_api()
+        calls = []
+
+        def post(url, headers, payload, timeout=60):
+            calls.append(timeout)
+            return {"choices": [{"message": {"content": "ok"}}]}
+
+        settings = Mock(ai_provider="OpenAI Compatible", ai_base_url="http://x", ai_model="m")
+        with patch.object(api, "_api_key", return_value="k"), patch.object(api, "_post", side_effect=post):
+            api._complete(settings, "s", "u", timeout=12)
+            api._complete(settings, "s", "u")
+        self.assertEqual(calls, [12, 60])
+
+
 class PageTests(unittest.TestCase):
     def test_the_chat_can_start_an_agent_and_shows_quick_replies(self):
         text = JS.read_text(encoding="utf-8")

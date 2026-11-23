@@ -755,13 +755,13 @@ def _require_ai(s):
 		)
 
 
-def _post(url, headers, payload):
-	r = requests.post(url, headers=headers, json=payload, timeout=60)
+def _post(url, headers, payload, timeout=60):
+	r = requests.post(url, headers=headers, json=payload, timeout=timeout)
 	r.raise_for_status()
 	return r.json()
 
 
-def _complete(s, system, user, max_tokens=700, quiet=False, attachments=None):
+def _complete(s, system, user, max_tokens=700, quiet=False, attachments=None, timeout=60):
 	"""Call the configured provider. Errors are logged; with quiet=True they raise
 	AuraAIError (no message reaches the user), otherwise a user-facing frappe.throw."""
 	key = _api_key(s)
@@ -778,6 +778,7 @@ def _complete(s, system, user, max_tokens=700, quiet=False, attachments=None):
 					"system": system,
 					"messages": [{"role": "user", "content": _anthropic_content(user, attachments)}],
 				},
+				timeout,
 			)
 			return "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
 
@@ -791,6 +792,7 @@ def _complete(s, system, user, max_tokens=700, quiet=False, attachments=None):
 				"temperature": 0.2,
 				"messages": [{"role": "system", "content": system}, {"role": "user", "content": _openai_content(user, attachments)}],
 			},
+			timeout,
 		)
 		return data["choices"][0]["message"]["content"] or ""
 	except requests.HTTPError as e:
