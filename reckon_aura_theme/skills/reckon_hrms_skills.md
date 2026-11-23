@@ -49,6 +49,13 @@ industry guide for what each industry loads and how to guide the person one step
    the bulk button gives a structure to everyone without one; its start date should be the **1st of the month** so
    that month's salary can run.
 
+**When everyone is paid a different gross:** keep one Salary Structure of percentages and fixed items (the shape of pay); the
+person's gross is the **base** on their own Structure Assignment. Several structures may be in use at once, each person with their own
+gross. For new staff, the employee import has optional `gross_salary` and `salary_structure` columns (structure is required when the
+company has more than one). For existing staff, Payroll Studio > Salary rules > "Each person's gross salary" lists active people with a
+structure and gross each; save changed rows or load a CSV (`employee`, `gross`, optional `structure`). A raise is a new assignment from
+its date, so old slips stay. The bulk card is only for people paid the same. Monthly extras use Additional Salary.
+
 ## Payroll Studio: run salary in five steps (Run salary tab)
 
 Tabs: **Guided setup**, Salary rules, Run salary. Payroll's Guided setup is the salary process in HRMS order: employees, holidays, attendance and leave
