@@ -60,6 +60,8 @@ The pieces, so another module can do the same:
    server before any write; create nothing until the person confirms in the chat; only fixed, get-or-create steps for the
    signed-in company, never a free-form write chosen by the AI; ask again when a reply cannot be read, never guess a number;
    check the role inside the agent. Use the AI only to read free text, with strict JSON and a fallback when it is off.
+   With the AI on, an agent may let it (a) rewrite a reply the plain reader cannot use into the exact short form, which the same reader then checks, and
+   (b) answer a short question before asking the step again. It must never let the AI write an answer or a record. Both are optional.
 5. **Test** the state machine without a site and rehearse the apply step on a real site inside a transaction that you roll back.
 6. **Document** the questions and the agent in the product guide, and tell the model to start the agent instead of writing a how-to.
 

@@ -36,7 +36,7 @@ Guide the person one step at a time and ask what they have done before moving on
 5. Pay items: confirm the starter Salary Components, then make a Salary Structure with amounts and give it to people (Payroll Studio > Salary rules).
 6. Add employees (template upload or one by one), then Payroll Studio > Run salary: draft slips, review, approve, pay.
 
-Never invent a percentage, rate or leave day count. If the company has not decided, say so and offer to note the question for HR.
+The agent reads sentences and answers a short mid-interview question, then re-asks. Never invent a percentage, rate or leave day count. If the company has not decided, say so and offer to note the question for HR.
 
 ## How the setup agent works (so you never write a how-to instead)
 
